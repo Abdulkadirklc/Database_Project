@@ -5,7 +5,11 @@ INSERT INTO `User` (username, email, password, bio) VALUES
 ('Serpil', 'serpil@gmail.com', 'password101', 'Kitap okumayı seven bir insan'),
 ('Arda', 'ardagüler@gmail.com', 'password112', 'Sinema tutkunu ve gezgin'),
 ('Ayşe', 'ayse@gmail.com', 'password131', 'Ailevi işlerle meşgul ve gönüllü çalışmalara katılır'),
-('Zeynep', 'zeynep@gmail.com', 'password415', 'Sosyal medya ve dijital pazarlama uzmanı');
+('Zeynep', 'zeynep@gmail.com', 'password415', 'Sosyal medya ve dijital pazarlama uzmanı'),
+('Arda Utku', 'ardautku@gmail.com', 'pw124235346', 'Profesyonel tenis oyuncusu'),
+('Efekan', 'efkn@gmail.com', 'pssw234wetr36', 'Kitap kurdu'), 
+('Mete', 'egmt@gmail.com', '12345', 'İlkel teknolojiler meraklısı'),
+('Utku', 'utku@gmail.com', 'sst3424146', 'CEO @qFin');
 
 
 
@@ -13,7 +17,9 @@ INSERT INTO `User` (username, email, password, bio) VALUES
 INSERT INTO `Group` (group_name, group_description, created_by) VALUES
 ('Trekking', 'Her hafta sonu doğa yürüyüşleri düzenleriz.', 1),
 ('Okçuluk Kulübü', 'Okçuluk ve her şey', 3),
-('Müzik ve Konserler', 'Canlı müzik geceleri, konserler ve dahası', 7);
+('Müzik ve Konserler', 'Canlı müzik geceleri, konserler ve dahası', 7),
+('Kitap Önerileri', 'Kitap okumadan yaşamın eksik kalacağını düşünen herkesi buluşturmak ümidiyle...', 9),
+('Borsa Istanbul Analiz', 'Anlık borsa analizleri', 11);
 
 
 INSERT INTO `Membership` (user_id, group_id, user_role) VALUES
@@ -23,14 +29,22 @@ INSERT INTO `Membership` (user_id, group_id, user_role) VALUES
 (4, 3, 'Admin'),
 (5, 2, 'Guest'),
 (6, 3, 'Member'),
-(7, 1, 'Admin');
+(7, 1, 'Admin'),
+(9, 4, 'Admin'),
+(1, 4, 'Member'),
+(2, 4, 'Member'), 
+(3, 4, 'Member'),
+(11, 5, 'Admin'), 
+(2, 5, 'Member'),
+(6, 5, 'Member');
 
 
 
 INSERT INTO `Event` (group_id, event_name, event_description, event_date, event_location) VALUES
 (1, 'Doğa Yürüyüşü - Aralık', 'Kışın en güzel doğa yürüyüşü', '2024-12-10', 'Çamlıca Tepesi'),
 (2, 'Okçuluk Turnuvası', 'Eğlenceli bir okçuluk turnuvası', '2024-12-15', 'Atatürk Ormanı'),
-(3, 'Yeni Yıl Konseri', 'Yılbaşı öncesi bir konser etkinliği', '2024-12-25', 'Beyoğlu Konser Salonu');
+(3, 'Yeni Yıl Konseri', 'Yılbaşı öncesi bir konser etkinliği', '2024-12-25', 'Beyoğlu Konser Salonu'),
+(4, '41. Uluslararası Kitap Fuarı', 'Uluslararası Kitap Fuarı', '2024-11-19', 'TÜYAP Fuar ve Kongre Merkezi');
 
 
 
@@ -41,7 +55,9 @@ INSERT INTO `Event_Attendance` (user_id, event_id, event_status) VALUES
 (4, 3, 'Attended'),
 (5, 2, 'Attended'),
 (6, 3, 'Interested'),
-(7, 1, 'Not Attended');
+(7, 1, 'Not Attended'),
+(9, 4, 'Attended'),
+(3, 4, 'Not Attended');
 
 
 
@@ -52,7 +68,8 @@ INSERT INTO `Feedback` (user_id, event_id, rating, feedback) VALUES
 (4, 3, 5, 'Konser mükemmeldi, harika bir atmosfer vardı.'),
 (5, 2, 4, 'Okçuluk turnuvası çok eğlenceliydi, daha fazla katılım beklerdim.'),
 (6, 3, 5, 'Yeni yıl konseri harikaydı, müzik çok iyiydi.'),
-(7, 1, 2, 'Yürüyüş güzeldi ama hava soğuktu.');
+(7, 1, 2, 'Yürüyüş güzeldi ama hava soğuktu.'),
+(9, 4, 5, 'Favori yazarımla nihayet tanışabildim, harika bir insan!');
 
 
 
@@ -67,7 +84,9 @@ INSERT INTO `Tag` (tag_name) VALUES
 ('Doğa'),
 ('Spor'),
 ('Müzik'),
-('Yeni Yıl');
+('Yeni Yıl'),
+('Finans'),
+('Kitap');
 
 
 
@@ -75,4 +94,5 @@ INSERT INTO `Event_Tag` (event_id, tag_id) VALUES
 (1, 1),
 (2, 2),
 (3, 3),
-(3, 4);
+(3, 4),
+(4, 6);
