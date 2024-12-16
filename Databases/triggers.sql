@@ -1,30 +1,24 @@
--- This triggers are used to prevent unauthorized users from creating events in the database.
 DELIMITER //
 
+-- This trigger are used to prevent unauthorized groups to create events
 CREATE TRIGGER before_event_insert
 BEFORE INSERT ON `Event`
 FOR EACH ROW
 BEGIN
-    DECLARE user_role ENUM('Member', 'Admin', 'Guest');
-    DECLARE group_creator INT;
-    
-    -- Get the group creator from Group table
-    SELECT created_by INTO group_creator
+    DECLARE group_exists INT;
+
+    -- Check if the group exists in the Group table
+    SELECT COUNT(*) INTO group_exists
     FROM `Group`
     WHERE group_id = NEW.group_id;
-    
-    -- Get the user role from Membership table
-    SELECT user_role INTO user_role
-    FROM Membership
-    WHERE user_id = NEW.created_by AND group_id = NEW.group_id
-    LIMIT 1;
-    
-    -- If the user is not an admin or the creator of the group, prevent the insert
-    IF user_role != 'Admin' AND group_creator != NEW.created_by THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Only the group admin or the group creator can create events';
+
+    -- If the group does not exist, raise an error
+    IF group_exists = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'The specified group does not exist';
     END IF;
 END //
 
+DELIMITER ;
 
 -- This trigger is used to automatically assign the role of 'Admin' to the group creator when joining a group.
 
