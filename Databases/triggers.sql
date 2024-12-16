@@ -173,12 +173,19 @@ BEGIN
 END//
 
 
--- Trigger to ensure before inserting feedback, the user attended the event and is the author
+-- Trigger to ensure before inserting feedback, the user attended the event and is the author, 
+-- and the feedback in not null
 CREATE TRIGGER before_feedback_insert
 BEFORE INSERT ON Feedback
 FOR EACH ROW
 BEGIN
     DECLARE user_attended INT;
+
+    -- Check if the comment is empty
+    IF (NEW.feedback IS NULL OR NEW.feedback = '') THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Feedback comments are required.';
+    END IF;
 
     -- Check if the user attended the event
     SELECT COUNT(*)
@@ -231,5 +238,27 @@ BEGIN
         SET MESSAGE_TEXT = 'Only the author of the feedback can update it.';
     END IF;
 END//
+
+-- Trigger to prevent event creation in the past
+CREATE TRIGGER before_event_insert
+BEFORE INSERT ON `Event`
+FOR EACH ROW
+BEGIN
+    IF NEW.event_date < CURDATE() THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Event date cannot be in the past.';
+    END IF;
+END//
+
+-- Trigger to set up a default bio if not provided.
+CREATE TRIGGER before_user_insert
+BEFORE INSERT ON `User`
+FOR EACH ROW
+BEGIN
+    IF NEW.bio IS NULL OR NEW.bio = '' THEN
+        SET NEW.bio = 'A bio hasn’t been set yet, but we’re sure this individual has a great story to share!';
+    END IF;
+END//
+
 
 DELIMITER ;
