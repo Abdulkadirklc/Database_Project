@@ -15,7 +15,7 @@ CREATE TABLE `User` (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(30) NOT NULL UNIQUE,
     email VARCHAR(30) NOT NULL UNIQUE,
-    password VARCHAR(20) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     bio VARCHAR(255)
 );
 
