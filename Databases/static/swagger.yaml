@@ -192,3 +192,332 @@ paths:
           description: "Invalid or missing token"
         '404':
           description: "User not found"
+
+  /events:
+    post:
+      summary: "Create a new event"
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group_id:
+                  type: integer
+                  example: 1
+                event_name:
+                  type: string
+                  example: "Team Meeting"
+                event_date:
+                  type: string
+                  format: date
+                  example: "2025-01-10"
+                event_location:
+                  type: string
+                  example: "Conference Room A"
+                event_description:
+                  type: string
+                  example: "Quarterly team meeting."
+      responses:
+        '201':
+          description: "Event created successfully"
+        '400':
+          description: "Missing required fields"
+
+  /events/{event_id}:
+    put:
+      summary: "Update an event"
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_name:
+                  type: string
+                  example: "Updated Team Meeting"
+                event_date:
+                  type: string
+                  format: date
+                  example: "2025-01-15"
+                event_location:
+                  type: string
+                  example: "Updated Conference Room B"
+                event_description:
+                  type: string
+                  example: "Updated meeting description."
+      responses:
+        '200':
+          description: "Event updated successfully"
+        '400':
+          description: "Missing required fields"
+
+    delete:
+      summary: "Delete an event"
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: "Event deleted successfully"
+        '404':
+          description: "Event not found"
+
+  /events/user/groups:
+    get:
+      summary: "Retrieve events for groups the user belongs to"
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "List of events for the user's groups"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    event_id:
+                      type: integer
+                      example: 1
+                    event_name:
+                      type: string
+                      example: "Team Meeting"
+
+  /events/sorted:
+    get:
+      summary: "Retrieve past and upcoming events"
+      tags:
+        - Events
+      responses:
+        '200':
+          description: "Past and upcoming events separated"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  past_events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_id:
+                          type: integer
+                          example: 1
+                        event_name:
+                          type: string
+                          example: "Past Event"
+                  future_events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_id:
+                          type: integer
+                          example: 2
+                        event_name:
+                          type: string
+                          example: "Future Event"
+
+  /events/notify:
+    post:
+      summary: "Notify the message board about a new event"
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: integer
+                  example: 1
+                group_id:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: "Message posted successfully"
+        '404':
+          description: "Event not found"
+
+    /events/tags:
+    post:
+      summary: "Add multiple tags to an event"
+      tags:
+        - Tags
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: integer
+                  example: 1
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example: ["urgent", "team"]
+      responses:
+        '201':
+          description: "Tags added successfully"
+        '400':
+          description: "Missing required fields"
+
+  /events/tags/{event_id}:
+    get:
+      summary: "Retrieve all tags for a specific event"
+      tags:
+        - Tags
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: "List of tags for the event"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    tag_name:
+                      type: string
+                      example: "urgent"
+
+  /events/tags/events/{tag_name}:
+    get:
+      summary: "Get all events with a specific tag"
+      tags:
+        - Tags
+      parameters:
+        - in: path
+          name: tag_name
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "List of events with the tag"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    event_id:
+                      type: integer
+                      example: 1
+                    event_name:
+                      type: string
+                      example: "Team Meeting"
+
+  /events/tags/popular:
+    get:
+      summary: "Retrieve popular tags based on usage"
+      tags:
+        - Tags
+      responses:
+        '200':
+          description: "List of popular tags"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    tag_name:
+                      type: string
+                      example: "urgent"
+                    usage_count:
+                      type: integer
+                      example: 42
+
+  /events/tags/{event_id}:
+    put:
+      summary: "Update tags for a specific event"
+      tags:
+        - Tags
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example: ["updated", "critical"]
+      responses:
+        '200':
+          description: "Tags updated successfully"
+        '400':
+          description: "Tags are required"
+
+    delete:
+      summary: "Remove all tags for a specific event"
+      tags:
+        - Tags
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: "Tags removed successfully"
