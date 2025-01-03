@@ -1138,3 +1138,386 @@ paths:
           description: "Tag deleted successfully"
         '404':
           description: "Tag not found"
+
+  /events/{event_id}/attendance:
+    post:
+      summary: "Add attendance to an event"
+      description: "Marks the current user as attending or interested in an event. Requires JWT."
+      tags:
+        - Attendance
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+          description: "Event ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "going"
+      responses:
+        '201':
+          description: "Attendance added successfully"
+        '400':
+          description: "Attendance status is required"
+
+    get:
+      summary: "List attendance for an event"
+      description: "Retrieves a list of users who are attending or interested in a specific event."
+      tags:
+        - Attendance
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+          description: "Event ID"
+      responses:
+        '200':
+          description: "List of attendance records"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id:
+                      type: integer
+                      example: 101
+                    username:
+                      type: string
+                      example: "alice"
+                    status:
+                      type: string
+                      example: "going"
+
+    put:
+      summary: "Update attendance for an event"
+      description: "Updates the attendance status of the current user. Requires JWT."
+      tags:
+        - Attendance
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+          description: "Event ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "not_going"
+      responses:
+        '200':
+          description: "Attendance updated successfully"
+        '400':
+          description: "New attendance status is required"
+        '404':
+          description: "Attendance record not found"
+
+    delete:
+      summary: "Delete attendance for an event"
+      description: "Deletes the current user's attendance record. Requires JWT."
+      tags:
+        - Attendance
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+          description: "Event ID"
+      responses:
+        '200':
+          description: "Attendance deleted successfully"
+        '404':
+          description: "Attendance record not found or already deleted"
+
+  /users/{user_id}/attendance:
+    get:
+      summary: "List user’s attended or interested events"
+      description: "Retrieves a list of all events that a specific user is attending or interested in."
+      tags:
+        - Attendance
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+          description: "User ID"
+      responses:
+        '200':
+          description: "List of events the user is attending/interested in"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    event_id:
+                      type: integer
+                      example: 10
+                    event_name:
+                      type: string
+                      example: "Sample Event"
+                    status:
+                      type: string
+                      example: "going"
+                    event_date:
+                      type: string
+                      format: date
+                      example: "2025-02-20"
+
+  /events/attendance/top-users:
+    get:
+      summary: "List top users with the most event attendance"
+      description: "Retrieves users who have attended (or shown interest in) the most events."
+      tags:
+        - Attendance
+      responses:
+        '200':
+          description: "List of top users"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id:
+                      type: integer
+                      example: 101
+                    username:
+                      type: string
+                      example: "alice"
+                    total_attendance:
+                      type: integer
+                      example: 5
+
+  /feedback:
+    post:
+      summary: "Add new feedback"
+      description: "Adds feedback for a specific event. Requires JWT."
+      tags:
+        - Feedback
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: integer
+                  example: 1
+                rating:
+                  type: integer
+                  example: 5
+                comment:
+                  type: string
+                  example: "Great event!"
+      responses:
+        '201':
+          description: "Feedback added successfully"
+        '400':
+          description: "event_id and rating are required"
+
+  /feedback/events/{event_id}:
+    get:
+      summary: "Get feedback for an event"
+      description: "Retrieves all feedback associated with a specific event."
+      tags:
+        - Feedback
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+          description: "Event ID"
+      responses:
+        '200':
+          description: "List of feedback for the event"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    feedback_id:
+                      type: integer
+                      example: 10
+                    user_id:
+                      type: integer
+                      example: 101
+                    username:
+                      type: string
+                      example: "alice"
+                    rating:
+                      type: integer
+                      example: 5
+                    comment:
+                      type: string
+                      example: "Great event!"
+                    created_at:
+                      type: string
+                      format: date-time
+                      example: "2025-01-04T12:00:00"
+
+  /feedback/users/{user_id}:
+    get:
+      summary: "Get feedback by user"
+      description: "Retrieves all feedback created by a specific user."
+      tags:
+        - Feedback
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: integer
+          description: "User ID"
+      responses:
+        '200':
+          description: "List of feedback by the user"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    feedback_id:
+                      type: integer
+                      example: 15
+                    event_id:
+                      type: integer
+                      example: 2
+                    event_name:
+                      type: string
+                      example: "Sample Event"
+                    rating:
+                      type: integer
+                      example: 4
+                    comment:
+                      type: string
+                      example: "It was good."
+                    created_at:
+                      type: string
+                      format: date-time
+                      example: "2025-01-04T14:00:00"
+
+  /feedback/stars/{event_id}:
+    get:
+      summary: "Get average rating and total feedback count for an event"
+      description: "Retrieves the average rating and total feedback count for a specific event."
+      tags:
+        - Feedback
+      parameters:
+        - in: path
+          name: event_id
+          required: true
+          schema:
+            type: integer
+          description: "Event ID"
+      responses:
+        '200':
+          description: "Average rating and total feedback"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  average_rating:
+                    type: number
+                    format: float
+                    example: 4.5
+                  total_feedback:
+                    type: integer
+                    example: 12
+
+  /feedback/{feedback_id}:
+    put:
+      summary: "Update feedback"
+      description: "Updates an existing feedback. Only the owner of the feedback can do this. Requires JWT."
+      tags:
+        - Feedback
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: feedback_id
+          required: true
+          schema:
+            type: integer
+          description: "Feedback ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+                  example: 4
+                comment:
+                  type: string
+                  example: "It was good, but could be better."
+      responses:
+        '200':
+          description: "Feedback updated successfully"
+        '400':
+          description: "rating is required"
+        '403':
+          description: "You can only update your own feedback"
+        '404':
+          description: "Feedback not found"
+
+    delete:
+      summary: "Delete feedback"
+      description: "Deletes a feedback. Only the feedback owner or the event creator can do this. Requires JWT."
+      tags:
+        - Feedback
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: feedback_id
+          required: true
+          schema:
+            type: integer
+          description: "Feedback ID"
+      responses:
+        '200':
+          description: "Feedback deleted successfully"
+        '403':
+          description: "You are not allowed to delete this feedback"
+        '404':
+          description: "Feedback not found"

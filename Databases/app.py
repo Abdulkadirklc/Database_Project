@@ -11,6 +11,8 @@ from routes.event_routes import event_bp
 from routes.group_routes import group_bp
 from routes.membership_routes import membership_bp
 from routes.tag_routes import tag_bp
+from routes.event_attendance_routes import event_attendance_bp
+from routes.feedback_routes import feedback_bp
 
 app = Flask(__name__)
 
@@ -49,6 +51,8 @@ app.register_blueprint(event_bp, url_prefix='/events')
 app.register_blueprint(group_bp, url_prefix='/groups')
 app.register_blueprint(membership_bp, url_prefix='/membership')
 app.register_blueprint(tag_bp, url_prefix='/tags')
+app.register_blueprint(event_attendance_bp, url_prefix='/event_attendance')
+app.register_blueprint(feedback_bp, url_prefix='/feedback')
 
 # -----------------------------------------------------------------------------
 # Run Application
