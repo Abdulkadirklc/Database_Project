@@ -49,20 +49,18 @@ To start the application, follow these steps:
    ```bash
    python app.py
    ```
-
+   Note: The application will automatically open the Swagger documentation in your default web browser. This feature is implemented using the webbrowser library.
 ### 4. Access API Documentation
 Once the application is running, you can access the Swagger documentation to explore the API:
 
-1. Open your web browser.
-
-2. Navigate to the following URL:
+1. If the browser does not open automatically, manually navigate to the following URL:
 ```bash
 http://127.0.0.1:5000/docs
 ```
 
-3. The Swagger UI will display a list of available API endpoints, including their request methods, parameters, and example responses.
+2. The Swagger UI will display a list of available API endpoints, including their request methods, parameters, and example responses.
 
-4. Use the Swagger interface to test the API directly by sending requests and viewing responses.
+3. Use the Swagger interface to test the API directly by sending requests and viewing responses.
 
 If the Swagger UI does not load, ensure that:
 - The `app.py` file is running without errors.

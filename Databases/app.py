@@ -1,5 +1,7 @@
 from flask import Flask, send_from_directory
 from flask_swagger_ui import get_swaggerui_blueprint
+import webbrowser
+import os
 
 # Import blueprints
 from routes.user_routes import user_bp
@@ -11,6 +13,12 @@ from routes.membership_routes import membership_bp
 
 app = Flask(__name__)
 
+# -----------------------------------------------------------------------------
+# Open Browser Automatically
+# -----------------------------------------------------------------------------
+def open_browser():
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":  # Only open on the main thread
+        webbrowser.open_new('http://127.0.0.1:5000/docs')
 
 # -----------------------------------------------------------------------------
 # Swagger UI Setup
@@ -44,5 +52,6 @@ app.register_blueprint(membership_bp, url_prefix='/membership')
 # Run Application
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
+    open_browser()
     app.run(debug=True)
      

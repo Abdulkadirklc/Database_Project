@@ -39,7 +39,7 @@ def create_tags():
     return jsonify({"message": "Tags added successfully."}), 201
 
 
-@event_tag_bp.route('/tags/<int:event_id>', methods=['GET'])
+@event_tag_bp.route('/<int:event_id>/tags', methods=['GET'])
 def get_event_tags(event_id):
     """
     GET /events/tags/<event_id> - Retrieve all tags for a specific event.
@@ -106,7 +106,7 @@ def get_popular_tags():
     return jsonify(tags), 200
 
 
-@event_tag_bp.route('/tags/<int:event_id>', methods=['PUT'])
+@event_tag_bp.route('/<int:event_id>/tags', methods=['PUT'])
 @jwt_required
 def update_event_tags(event_id):
     """
