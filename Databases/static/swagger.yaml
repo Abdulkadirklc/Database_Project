@@ -521,3 +521,276 @@ paths:
       responses:
         '200':
           description: "Tags removed successfully"
+
+
+  /membership/{group_id}:
+      post:
+        summary: "Add a user to a group"
+        tags:
+          - Membership
+        security:
+          - BearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    example: "Member"
+        responses:
+          '201':
+            description: "User added to the group successfully"
+          '400':
+            description: "Invalid role or user already a member"
+          '404':
+            description: "Group not found"
+
+      get:
+        summary: "List all members of a group with their roles"
+        tags:
+          - Membership
+        responses:
+          '200':
+            description: "A list of group members with their roles"
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+                        example: "alice"
+                      user_role:
+                        type: string
+                        example: "Member"
+
+    /membership/user/{username}/groups:
+      get:
+        summary: "List all groups a user is a member of with their roles"
+        tags:
+          - Membership
+        responses:
+          '200':
+            description: "A list of groups the user is a member of with their roles"
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      group_name:
+                        type: string
+                        example: "Developers"
+                      user_role:
+                        type: string
+                        example: "Admin"
+          '404':
+            description: "User not found"
+
+    /membership/admins:
+      get:
+        summary: "List all admins with their group names"
+        tags:
+          - Membership
+        responses:
+          '200':
+            description: "A list of all admins with their group names"
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      group_name:
+                        type: string
+                        example: "Developers"
+                      username:
+                        type: string
+                        example: "alice"
+                      user_role:
+                        type: string
+                        example: "Admin"
+
+    /membership/{group_id}/{user_id}/role:
+      put:
+        summary: "Update a user's role in a group"
+        tags:
+          - Membership
+        security:
+          - BearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    example: "Admin"
+        responses:
+          '200':
+            description: "User role updated successfully"
+          '400':
+            description: "Invalid role or role change not allowed"
+          '403':
+            description: "Unauthorized access"
+          '404':
+            description: "User not found"
+
+    /membership/{group_id}/{user_id}:
+      delete:
+        summary: "Remove a user from a group"
+        tags:
+          - Membership
+        security:
+          - BearerAuth: []
+        responses:
+          '200':
+            description: "User removed from the group successfully"
+          '403':
+            description: "Unauthorized access"
+          '404':
+            description: "User not found"
+
+
+
+  /groups:
+    get:
+      summary: "Get all groups"
+      tags:
+        - Groups
+      responses:
+        '200':
+          description: "A list of groups."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    group_id:
+                      type: integer
+                      example: 1
+                    group_name:
+                      type: string
+                      example: "Developers"
+                    group_description:
+                      type: string
+                      example: "Group for developers"
+
+    post:
+      summary: "Create a new group"
+      tags:
+        - Groups
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group_name:
+                  type: string
+                  example: "Developers"
+                group_description:
+                  type: string
+                  example: "Group for developers"
+      responses:
+        '201':
+          description: "Group created successfully"
+        '400':
+          description: "Missing required fields"
+
+  /groups/{group_id}:
+    get:
+      summary: "Get a single group by ID"
+      tags:
+        - Groups
+      parameters:
+        - in: path
+          name: group_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: "The group data"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  group_name:
+                    type: string
+                    example: "Developers"
+                  group_description:
+                    type: string
+                    example: "Group for developers"
+        '404':
+          description: "Group not found"
+
+    put:
+      summary: "Update an existing group by ID"
+      tags:
+        - Groups
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: group_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group_name:
+                  type: string
+                  example: "Updated Developers"
+                group_description:
+                  type: string
+                  example: "Updated group for developers"
+      responses:
+        '200':
+          description: "Group updated successfully"
+        '400':
+          description: "Missing required fields"
+        '403':
+          description: "Unauthorized access"
+        '404':
+          description: "Group not found"
+
+    delete:
+      summary: "Delete a group by ID"
+      tags:
+        - Groups
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: group_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: "Group deleted successfully"
+        '403':
+          description: "Unauthorized access"
+        '404':
+          description: "Group not found"
