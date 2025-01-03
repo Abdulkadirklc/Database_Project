@@ -7,20 +7,45 @@ from routes.auth import generate_jwt_token, jwt_required
 user_bp = Blueprint('user_bp', __name__)
 
 @user_bp.route('/', methods=['GET'])
-def get_all_users():
+def get_users():
     """
-    GET /users - Return username, email, bio from all users.
+    GET /users - Return paginated username, email, bio from users.
+    Supports advanced search by 'query' parameter (case-insensitive) for username or email.
+    Query Parameters:
+        - query: String to search for users whose username or email starts with the query string.
+        - page: Page number for pagination (default: 1).
+        - size: Number of results per page (default: 20, max: 100).
     """
+    # Get query parameters
+    search_query = request.args.get('query', '')
+    page = int(request.args.get('page', 1))
+    size = int(request.args.get('size', 20))
+
+    # Ensure size is within a reasonable limit
+    if size > 100:
+        size = 100
+
+    # Calculate the offset for pagination
+    offset = (page - 1) * size
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            sql = "SELECT username, email, bio FROM User"
-            cursor.execute(sql)
+            # Prepare SQL for case-insensitive startswith search with pagination
+            sql = """
+            SELECT username, email, bio 
+            FROM User
+            WHERE (username LIKE %s OR email LIKE %s)
+            LIMIT %s OFFSET %s
+            """
+            # Adjust the query for startswith by adding the `%` only after the search query
+            cursor.execute(sql, (f"{search_query}%", f"{search_query}%", size, offset))
             rows = cursor.fetchall()
     finally:
         conn.close()
 
     return jsonify(rows), 200
+
 
 @user_bp.route('/', methods=['POST'])
 def create_user():
@@ -92,7 +117,6 @@ def login_user():
 def get_user(username):
     """
     GET /users/<username> - Retrieve a single user by username.
-    (No auth here by default; you can protect it with @jwt_required if you wish.)
     """
     conn = get_connection()
     try:
@@ -117,7 +141,7 @@ def update_user(username):
     Only the user can update their own account information.
     """
     # Extract user_id from JWT
-    current_user_id = g.current_user_id  # Assuming @jwt_required sets g.current_user_id
+    current_user_id = g.current_user_id  
 
     data = request.get_json() or {}
 

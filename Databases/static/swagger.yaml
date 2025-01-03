@@ -17,9 +17,31 @@ components:
 paths:
   /users:
     get:
-      summary: "Get all users"
+      summary: "Get users with advanced search"
       tags:
         - Users
+      parameters:
+        - in: query
+          name: query
+          required: false
+          schema:
+            type: string
+            example: "emre"
+          description: "Search string to match in username or email (case-insensitive)."
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            example: 1
+          description: "Page number for pagination (default: 1)."
+        - in: query
+          name: size
+          required: false
+          schema:
+            type: integer
+            example: 20
+          description: "Number of results per page (default: 20, max: 100)."
       responses:
         '200':
           description: "A list of users."
@@ -115,6 +137,7 @@ paths:
           required: true
           schema:
             type: string
+          description: "The username of the user to fetch."
       responses:
         '200':
           description: "The user data"
@@ -131,7 +154,7 @@ paths:
                     example: "alice@example.com"
                   bio:
                     type: string
-                    example: "Short bio..."
+                    example: "Short bio"
         '404':
           description: "User not found"
 
@@ -147,6 +170,7 @@ paths:
           required: true
           schema:
             type: string
+          description: "The username of the user to update."
       requestBody:
         required: true
         content:
@@ -185,6 +209,7 @@ paths:
           required: true
           schema:
             type: string
+          description: "The username of the user to delete."
       responses:
         '200':
           description: "User deleted"
@@ -376,7 +401,7 @@ paths:
     post:
       summary: "Add multiple tags to an event"
       tags:
-        - Tags
+        - Events
       security:
         - BearerAuth: []
       requestBody:
@@ -404,7 +429,7 @@ paths:
     get:
       summary: "Retrieve all tags for a specific event"
       tags:
-        - Tags
+        - Events
       parameters:
         - in: path
           name: event_id
@@ -428,7 +453,7 @@ paths:
     put:
       summary: "Update tags for a specific event"
       tags:
-        - Tags
+        - Events
       security:
         - BearerAuth: []
       parameters:
@@ -455,12 +480,11 @@ paths:
         '400':
           description: "Tags are required"
 
-
   /events/tags/events/{tag_name}:
     get:
       summary: "Get all events with a specific tag"
       tags:
-        - Tags
+        - Events
       parameters:
         - in: path
           name: tag_name
@@ -488,7 +512,7 @@ paths:
     get:
       summary: "Retrieve popular tags based on usage"
       tags:
-        - Tags
+        - Events
       responses:
         '200':
           description: "List of popular tags"
@@ -776,3 +800,341 @@ paths:
           description: "Unauthorized access"
         '404':
           description: "Group not found"
+
+  /messages:
+    get:
+      summary: "List all messages ordered from newest to oldest"
+      tags:
+        - Messages
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: "Group ID to filter messages."
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            example: 1
+          description: "Page number for pagination (default: 1)."
+        - in: query
+          name: size
+          required: false
+          schema:
+            type: integer
+            example: 20
+          description: "Number of results per page (default: 20, max: 100)."
+      responses:
+        '200':
+          description: "All messages ordered from newest to oldest"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    message_id:
+                      type: integer
+                      example: 1
+                    group_id:
+                      type: integer
+                      example: 1
+                    user_id:
+                      type: integer
+                      example: 101
+                    user_message:
+                      type: string
+                      example: "This is a message"
+                    message_time:
+                      type: string
+                      format: date-time
+                      example: "2024-01-15T12:34:56"
+        '400':
+          description: "Group ID is required"
+        '403':
+          description: "Unauthorized access. You are not a member of this group."
+        '401':
+          description: "Unauthorized access or missing token"
+
+    post:
+      summary: "Create a new message"
+      tags:
+        - Messages
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_message:
+                  type: string
+                  example: "This is a new message"
+                group_id:
+                  type: integer
+                  example: 1
+          description: "Group ID and message content."
+      responses:
+        '201':
+          description: "Message created successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message created successfully"
+                  message_id:
+                    type: integer
+                    example: 123
+        '400':
+          description: "Message text or group ID is required"
+        '403':
+          description: "Unauthorized access. You are not a member of this group."
+        '401':
+          description: "Unauthorized access or missing token"
+
+  /messages/filter:
+    get:
+      summary: "Filter messages by date range with pagination"
+      tags:
+        - Messages
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: "Group ID to filter messages."
+        - in: query
+          name: start_date
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2024-01-01"
+          description: "Start date for filtering (YYYY-MM-DD)."
+        - in: query
+          name: end_date
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2024-02-01"
+          description: "End date for filtering (YYYY-MM-DD)."
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            example: 1
+          description: "Page number for pagination (default: 1)."
+        - in: query
+          name: size
+          required: false
+          schema:
+            type: integer
+            example: 20
+          description: "Number of results per page (default: 20, max: 100)."
+      responses:
+        '200':
+          description: "Filtered messages"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    message_id:
+                      type: integer
+                      example: 1
+                    user_message:
+                      type: string
+                      example: "Hello, world!"
+                    message_time:
+                      type: string
+                      format: date-time
+                      example: "2024-01-15T12:34:56"
+        '400':
+          description: "Group ID, start date, and end date are required"
+        '403':
+          description: "Unauthorized access. You are not a member of this group."
+        '401':
+          description: "Unauthorized access or missing token"
+
+  /messages/<message_id>:
+    delete:
+      summary: "Delete a message by its ID"
+      tags:
+        - Messages
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: message_id
+          required: true
+          schema:
+            type: integer
+          description: "The ID of the message to delete."
+      responses:
+        '200':
+          description: "Message deleted successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message deleted successfully"
+        '403':
+          description: "Unauthorized access. Only the creator or a group admin can delete this message."
+        '404':
+          description: "Message not found"
+        '401':
+          description: "Unauthorized access or missing token"
+
+    put:
+      summary: "Update a message by its ID"
+      tags:
+        - Messages
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: message_id
+          required: true
+          schema:
+            type: integer
+          description: "The ID of the message to update."
+      requestBody:
+        req
+
+
+  /tags:
+    post:
+      summary: "Create a new tag"
+      tags:
+        - Tags
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag_name:
+                  type: string
+                  example: "Event Management"
+      responses:
+        '201':
+          description: "Tag created successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tag created successfully"
+                  tag_id:
+                    type: integer
+                    example: 1
+        '400':
+          description: "Tag name is required"
+
+    get:
+      summary: "List all tags with optional search"
+      tags:
+        - Tags
+      parameters:
+        - in: query
+          name: query
+          required: false
+          schema:
+            type: string
+            example: "Event"
+          description: "Search string to filter tags by name."
+      responses:
+        '200':
+          description: "A list of tags."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    tag_id:
+                      type: integer
+                      example: 1
+                    tag_name:
+                      type: string
+                      example: "Event Management"
+
+  /tags/{tag_id}:
+    put:
+      summary: "Update a tag by its ID"
+      tags:
+        - Tags
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: tag_id
+          required: true
+          schema:
+            type: integer
+          description: "The ID of the tag to update."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag_name:
+                  type: string
+                  example: "Updated Tag Name"
+      responses:
+        '200':
+          description: "Tag updated successfully"
+        '404':
+          description: "Tag not found"
+        '400':
+          description: "Tag name is required"
+
+    delete:
+      summary: "Delete a tag by its ID"
+      tags:
+        - Tags
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: tag_id
+          required: true
+          schema:
+            type: integer
+          description: "The ID of the tag to delete."
+      responses:
+        '200':
+          description: "Tag deleted successfully"
+        '404':
+          description: "Tag not found"
