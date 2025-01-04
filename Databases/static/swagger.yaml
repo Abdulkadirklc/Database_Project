@@ -531,7 +531,7 @@ paths:
                       example: 42
 
 
-  /membership/{group_id}:
+  /membership/:
     post:
       summary: "Add a user to a group"
       tags:
@@ -545,24 +545,43 @@ paths:
             schema:
               type: object
               properties:
+                group_id:
+                  type: integer
+                  example: 1
                 role:
                   type: string
+                  enum: [Member, Admin, Guest]
+                  default: Member
                   example: "Member"
       responses:
         '201':
           description: "User added to the group successfully"
         '400':
-          description: "Invalid role or user already a member"
+          description: "Group ID or role is invalid or user is already a member"
         '404':
           description: "Group not found"
+        '403':
+          description: "Unauthorized access"
 
     get:
       summary: "List all members of a group with their roles"
       tags:
         - Membership
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group_id:
+                  type: integer
+                  example: 1
       responses:
         '200':
-          description: "A list of group members with their roles"
+          description: "List of all members with their roles"
           content:
             application/json:
               schema:
@@ -575,16 +594,38 @@ paths:
                       example: "alice"
                     user_role:
                       type: string
+                      enum: [Member, Admin, Guest]
                       example: "Member"
+        '400':
+          description: "Group ID is required"
+        '404':
+          description: "Group not found"
+        '403':
+          description: "Unauthorized access"
 
-  /membership/user/{username}/groups:
+  /membership/user/groups:
     get:
-      summary: "List all groups a user is a member of with their roles"
+      summary: List all groups a user is a member of with their roles
+      description: Retrieves a list of groups and roles associated with a specified username.
       tags:
         - Membership
+      requestBody:
+        description: A JSON object containing the username of the user.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "john_doe"
+                  description: The username of the user.
+              required:
+                - username
       responses:
-        '200':
-          description: "A list of groups the user is a member of with their roles"
+        200:
+          description: A list of groups the user belongs to and their roles.
           content:
             application/json:
               schema:
@@ -595,11 +636,31 @@ paths:
                     group_name:
                       type: string
                       example: "Developers"
+                      description: The name of the group.
                     user_role:
                       type: string
                       example: "Admin"
-        '404':
-          description: "User not found"
+                      description: The role of the user in the group.
+        400:
+          description: Bad request due to missing or invalid parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Username is required"
+        404:
+          description: The specified user was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not found"
 
   /membership/admins:
     get:
@@ -626,9 +687,76 @@ paths:
                       type: string
                       example: "Admin"
 
-  /membership/{group_id}/{user_id}/role:
+  /membership/role:
     put:
-      summary: "Update a user's role in a group"
+      summary: "Update a user's role in their group"
+      tags:
+        - Membership
+      security:
+        - BearerAuth: []  # JWT gereksinimi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  example: 123
+                  description: "ID of the user whose role is being updated"
+                role:
+                  type: string
+                  example: "Admin"
+                  description: "The new role to assign to the user"
+              required:
+                - user_id
+                - role
+      responses:
+        '200':
+          description: "User role updated successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User role updated successfully."
+        '400':
+          description: "Invalid role or role change not allowed"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid role"
+        '403':
+          description: "Unauthorized access"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized. Only admins can change roles."
+        '404':
+          description: "User not found or not a member of the group"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not a member of any group"
+
+  /membership/remove:
+    delete:
+      summary: "Remove a user from a group"
       tags:
         - Membership
       security:
@@ -640,33 +768,22 @@ paths:
             schema:
               type: object
               properties:
-                role:
-                  type: string
-                  example: "Admin"
+                group_id:
+                  type: integer
+                  example: 1
+                user_id:
+                  type: integer
+                  example: 123
       responses:
         '200':
-          description: "User role updated successfully"
+          description: "User removed from the group successfully"
         '400':
-          description: "Invalid role or role change not allowed"
+          description: "group_id and user_id are required"
         '403':
           description: "Unauthorized access"
         '404':
           description: "User not found"
 
-  /membership/{group_id}/{user_id}:
-    delete:
-      summary: "Remove a user from a group"
-      tags:
-        - Membership
-      security:
-        - BearerAuth: []
-      responses:
-        '200':
-          description: "User removed from the group successfully"
-        '403':
-          description: "Unauthorized access"
-        '404':
-          description: "User not found"
 
   /groups:
     get:
