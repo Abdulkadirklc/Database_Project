@@ -567,18 +567,13 @@ paths:
       summary: "List all members of a group with their roles"
       tags:
         - Membership
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                group_id:
-                  type: integer
-                  example: 1
+      parameters:
+        - in: query
+          name: group_id
+          required: true
+          schema:
+            type: integer
+          description: "The ID of the group to fetch members for"
       responses:
         '200':
           description: "List of all members with their roles"
@@ -600,32 +595,22 @@ paths:
           description: "Group ID is required"
         '404':
           description: "Group not found"
-        '403':
-          description: "Unauthorized access"
 
   /membership/user/groups:
     get:
-      summary: List all groups a user is a member of with their roles
-      description: Retrieves a list of groups and roles associated with a specified username.
+      summary: "List all groups a user is a member of with their roles"
       tags:
         - Membership
-      requestBody:
-        description: A JSON object containing the username of the user.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  example: "john_doe"
-                  description: The username of the user.
-              required:
-                - username
+      parameters:
+        - in: query
+          name: username
+          required: true
+          schema:
+            type: string
+          description: "The username of the user to fetch groups for"
       responses:
-        200:
-          description: A list of groups the user belongs to and their roles.
+        '200':
+          description: "List of all groups with their roles the user is a member of"
           content:
             application/json:
               schema:
@@ -636,31 +621,16 @@ paths:
                     group_name:
                       type: string
                       example: "Developers"
-                      description: The name of the group.
                     user_role:
                       type: string
-                      example: "Admin"
-                      description: The role of the user in the group.
-        400:
-          description: Bad request due to missing or invalid parameters.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Username is required"
-        404:
-          description: The specified user was not found.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "User not found"
+                      enum: [Member, Admin, Guest]
+                      example: "Member"
+        '400':
+          description: "Username is required"
+        '404':
+          description: 
+            - "User not found"
+            - "User is not a member of any group"
 
   /membership/admins:
     get:
@@ -689,79 +659,19 @@ paths:
 
   /membership/role:
     put:
-      summary: "Update a user's role in their group"
-      tags:
-        - Membership
-      security:
-        - BearerAuth: []  # JWT gereksinimi
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                user_id:
-                  type: integer
-                  example: 123
-                  description: "ID of the user whose role is being updated"
-                role:
-                  type: string
-                  example: "Admin"
-                  description: "The new role to assign to the user"
-              required:
-                - user_id
-                - role
-      responses:
-        '200':
-          description: "User role updated successfully"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "User role updated successfully."
-        '400':
-          description: "Invalid role or role change not allowed"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Invalid role"
-        '403':
-          description: "Unauthorized access"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Unauthorized. Only admins can change roles."
-        '404':
-          description: "User not found or not a member of the group"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "User not a member of any group"
-
-  /membership/remove:
-    delete:
-      summary: "Remove a user from a group"
+      summary: Update a user's role in their group
+      description: |
+        - Admin can update any user's role in their group.
+        - Admin can promote a user to an admin role, but there can be at most 2 admins per group.
+        - Admin can resign from their role and become a Member, but there must be at least 1 admin remaining in the group.
+        - Non-admin users can only update their own role, and cannot promote themselves to Admin.
+      operationId: updateUserRole
       tags:
         - Membership
       security:
         - BearerAuth: []
       requestBody:
+        description: JSON object containing the group_id, user_id, and role.
         required: true
         content:
           application/json:
@@ -770,20 +680,158 @@ paths:
               properties:
                 group_id:
                   type: integer
-                  example: 1
+                  description: The ID of the group
                 user_id:
                   type: integer
-                  example: 123
+                  description: The ID of the user whose role is being updated
+                role:
+                  type: string
+                  enum:
+                    - Admin
+                    - Member
+                    - Guest
+                  description: The new role for the user
+              required:
+                - group_id
+                - user_id
+                - role
+      responses:
+        200:
+          description: User role updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User role updated successfully."
+        400:
+          description: Bad request. Invalid role, missing parameters, or condition violations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Cannot add more than 2 admins to the group."
+        403:
+          description: Forbidden. User is not authorized to perform this action.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "You cannot assign yourself the Admin role."
+        404:
+          description: Not found. Target user not found in the group.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Target user is not a member of this group."
+        409:
+          description: Conflict. Admin count in the group is insufficient or excessive.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Cannot remove the last admin of the group."
+
+  /membership/remove:
+    delete:
+      summary: Remove a user from a group.
+      description: |
+        Only an admin or the user themselves can remove a user.
+        Admin can only remove members from their own group.
+        Ensures there is always at least one admin in the group.
+      operationId: removeUserFromGroup
+      tags:
+        - Membership
+      security:
+        - BearerAuth: []
+      requestBody:
+        description: |
+          Expects JSON: { "group_id": <group_id>, "user_id": <user_id> }
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group_id:
+                  type: integer
+                  description: The ID of the group
+                user_id:
+                  type: integer
+                  description: The ID of the user to remove
+              required:
+                - group_id
+                - user_id
       responses:
         '200':
-          description: "User removed from the group successfully"
+          description: User removed from the group successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User removed from the group successfully."
         '400':
-          description: "group_id and user_id are required"
+          description: |
+            Error in request parameters, such as missing group_id, user_id,
+            or if removing an admin that would leave the group without an admin.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "There must be at least one admin in the group."
         '403':
-          description: "Unauthorized access"
+          description: |
+            Unauthorized access, either the user is not an admin or not the target user.
+            Admin can only remove users from their own group.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized. Only admins or the user themselves can remove members."
         '404':
-          description: "User not found"
-
+          description: User not found or not a member of the group.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not a member of the group."
+        '500':
+          description: Internal server error due to a failure in the backend logic.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "An error occurred: [error_message]"
 
   /groups:
     get:

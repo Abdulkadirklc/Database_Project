@@ -20,7 +20,7 @@ app = Flask(__name__)
 # Open Browser Automatically
 # -----------------------------------------------------------------------------
 def open_browser():
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":  # Only open on the main thread
+    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         webbrowser.open_new('http://127.0.0.1:5000/docs')
 
 # -----------------------------------------------------------------------------
