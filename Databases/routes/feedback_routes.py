@@ -4,7 +4,7 @@ from routes.auth import jwt_required
 
 feedback_bp = Blueprint('feedback_bp', __name__)
 
-@feedback_bp.route('/feedback', methods=['POST'])
+@feedback_bp.route('/', methods=['POST'])
 @jwt_required
 def add_feedback():
     """
@@ -37,7 +37,7 @@ def add_feedback():
     return jsonify({"message": "Feedback added successfully", "feedback_id": feedback_id}), 201
 
 
-@feedback_bp.route('/feedback/events/<int:event_id>', methods=['GET'])
+@feedback_bp.route('/events/<int:event_id>', methods=['GET'])
 def get_feedback_by_event(event_id):
     """
     GET /feedback/events/<event_id>
@@ -61,7 +61,7 @@ def get_feedback_by_event(event_id):
     return jsonify(feedbacks), 200
 
 
-@feedback_bp.route('/feedback/users/<int:user_id>', methods=['GET'])
+@feedback_bp.route('/users/<int:user_id>', methods=['GET'])
 def get_feedback_by_user(user_id):
     """
     GET /feedback/users/<user_id>
@@ -85,7 +85,7 @@ def get_feedback_by_user(user_id):
     return jsonify(feedbacks), 200
 
 
-@feedback_bp.route('/feedback/stars/<int:event_id>', methods=['GET'])
+@feedback_bp.route('/stars/<int:event_id>', methods=['GET'])
 def get_event_rating_summary(event_id):
     """
     GET /feedback/stars/<event_id>
@@ -113,7 +113,7 @@ def get_event_rating_summary(event_id):
     }), 200
 
 
-@feedback_bp.route('/feedback/<int:feedback_id>', methods=['PUT'])
+@feedback_bp.route('/<int:feedback_id>', methods=['PUT'])
 @jwt_required
 def update_feedback(feedback_id):
     """
@@ -157,7 +157,7 @@ def update_feedback(feedback_id):
     return jsonify({"message": "Feedback updated successfully"}), 200
 
 
-@feedback_bp.route('/feedback/<int:feedback_id>', methods=['DELETE'])
+@feedback_bp.route('/<int:feedback_id>', methods=['DELETE'])
 @jwt_required
 def delete_feedback(feedback_id):
     """

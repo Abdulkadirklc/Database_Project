@@ -6,6 +6,8 @@ event_bp = Blueprint('event_bp', __name__)
 
 default_event_description = "There is no description yet for this event."
 
+
+# Check if the request sender is in the group
 @event_bp.route('/', methods=['POST'])
 @jwt_required
 def create_event():
@@ -19,7 +21,9 @@ def create_event():
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields."}), 400
 
+   
     event_description = data.get('event_description', default_event_description)
+    
     conn = get_connection()
     try:
         with conn.cursor() as cursor:

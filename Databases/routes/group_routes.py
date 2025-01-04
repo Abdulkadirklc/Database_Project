@@ -12,7 +12,7 @@ def get_all_groups():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            sql = "SELECT group_id, group_name, group_description FROM Group"
+            sql = "SELECT group_id, group_name, group_description FROM `Group`"
             cursor.execute(sql)
             rows = cursor.fetchall()
     finally:
@@ -43,7 +43,7 @@ def create_group():
     try:
         with conn.cursor() as cursor:
             sql = """
-            INSERT INTO Group (group_name, group_description, created_by)
+            INSERT INTO `Group` (group_name, group_description, created_by)
             VALUES (%s, %s, %s)
             """
             cursor.execute(sql, (group_name, group_description, created_by))
@@ -62,7 +62,7 @@ def get_group(group_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            sql = "SELECT group_name, group_description FROM Group WHERE group_id = %s"
+            sql = "SELECT group_name, group_description FROM `Group` WHERE group_id = %s"
             cursor.execute(sql, (group_id,))
             row = cursor.fetchone()
     finally:
@@ -91,7 +91,7 @@ def update_group(group_id):
     try:
         with conn.cursor() as cursor:
             # Check if the group exists
-            sql_check = "SELECT created_by FROM Group WHERE group_id = %s"
+            sql_check = "SELECT created_by FROM `Group` WHERE group_id = %s"
             cursor.execute(sql_check, (group_id,))
             result = cursor.fetchone()
 
@@ -104,7 +104,7 @@ def update_group(group_id):
 
             # Perform the update
             sql_update = """
-            UPDATE Group
+            UPDATE `Group`
             SET group_name = %s, group_description = %s
             WHERE group_id = %s
             """
@@ -127,7 +127,7 @@ def delete_group(group_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            sql_check = "SELECT created_by FROM Group WHERE group_id = %s"
+            sql_check = "SELECT created_by FROM `Group` WHERE group_id = %s"
             cursor.execute(sql_check, (group_id,))
             result = cursor.fetchone()
 
@@ -138,7 +138,7 @@ def delete_group(group_id):
             if current_user_id != creator_id:
                 return jsonify({"error": "Unauthorized. Only the creator can delete the group."}), 403
 
-            sql_delete = "DELETE FROM Group WHERE group_id = %s"
+            sql_delete = "DELETE FROM `Group` WHERE group_id = %s"
             cursor.execute(sql_delete, (group_id,))
             conn.commit()
     finally:

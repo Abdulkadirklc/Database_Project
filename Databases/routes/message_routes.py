@@ -1,8 +1,12 @@
+# Check functions
+# Create delete update
+
 from flask import Blueprint, request, jsonify, g
 from routes import get_connection
 from routes.auth import jwt_required
 
 message_bp = Blueprint('message_bp', __name__)
+
 
 @message_bp.route('/filter', methods=['GET'])
 @jwt_required

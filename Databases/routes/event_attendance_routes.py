@@ -1,8 +1,12 @@
+# 404 not found
+
+
 from flask import Blueprint, request, jsonify, g
 from routes import get_connection
 from routes.auth import jwt_required
 
 event_attendance_bp = Blueprint('event_attendance_bp', __name__)
+
 
 @event_attendance_bp.route('/events/<int:event_id>/attendance', methods=['POST'])
 @jwt_required

@@ -1,3 +1,4 @@
+-- Active: 1728309488095@@127.0.0.1@3306@event_management
 INSERT INTO `User` (username, email, password, bio) VALUES
 ('Abdulkadir', 'abdulkadirkk42@gmail.com', 'password123', 'Doğa sever'),
 ('Ahmet', 'ahmett52@gmail.com', 'password456', 'Sporcu'),
@@ -11,7 +12,7 @@ INSERT INTO `User` (username, email, password, bio) VALUES
 ('Mete', 'egmt@gmail.com', '12345', 'İlkel teknolojiler meraklısı'),
 ('Utku', 'utku@gmail.com', 'sst3424146', 'CEO @qFin');
 
-
+use event_management;
 
 
 INSERT INTO `Group` (group_name, group_description, created_by) VALUES
@@ -41,10 +42,10 @@ INSERT INTO `Membership` (user_id, group_id, user_role) VALUES
 
 
 INSERT INTO `Event` (group_id, event_name, event_description, event_date, event_location) VALUES
-(1, 'Doğa Yürüyüşü - Aralık', 'Kışın en güzel doğa yürüyüşü', '2024-12-10', 'Çamlıca Tepesi'),
-(2, 'Okçuluk Turnuvası', 'Eğlenceli bir okçuluk turnuvası', '2024-12-15', 'Atatürk Ormanı'),
-(3, 'Yeni Yıl Konseri', 'Yılbaşı öncesi bir konser etkinliği', '2024-12-25', 'Beyoğlu Konser Salonu'),
-(4, '41. Uluslararası Kitap Fuarı', 'Uluslararası Kitap Fuarı', '2024-11-19', 'TÜYAP Fuar ve Kongre Merkezi');
+(1, 'Doğa Yürüyüşü - Aralık', 'Kışın en güzel doğa yürüyüşü', '2026-12-10', 'Çamlıca Tepesi'),
+(2, 'Okçuluk Turnuvası', 'Eğlenceli bir okçuluk turnuvası', '2026-12-15', 'Atatürk Ormanı'),
+(3, 'Yeni Yıl Konseri', 'Yılbaşı öncesi bir konser etkinliği', '2026-12-25', 'Beyoğlu Konser Salonu'),
+(4, '41. Uluslararası Kitap Fuarı', 'Uluslararası Kitap Fuarı', '2026-11-19', 'TÜYAP Fuar ve Kongre Merkezi');
 
 
 

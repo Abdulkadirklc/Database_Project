@@ -133,6 +133,9 @@ def get_user(username):
     return jsonify(row), 200
 
 
+
+## degistir
+## updateden sonra token geçersiz oluyor mu
 @user_bp.route('/<string:username>', methods=['PUT'])
 @jwt_required  # Requires valid JWT
 def update_user(username):
@@ -185,7 +188,7 @@ def update_user(username):
 
     return jsonify({"message": f"User '{username}' updated successfully."}), 200
 
-
+## parametreyi degistir
 @user_bp.route('/<string:username>', methods=['DELETE'])
 @jwt_required  # Requires valid JWT
 def delete_user(username):
