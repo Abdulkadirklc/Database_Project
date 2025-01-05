@@ -362,32 +362,6 @@ paths:
                           type: string
                           example: "Future Event"
 
-  /events/notify:
-    post:
-      summary: "Notify the message board about a new event"
-      tags:
-        - Events
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                event_id:
-                  type: integer
-                  example: 1
-                group_id:
-                  type: integer
-                  example: 1
-      responses:
-        '201':
-          description: "Message posted successfully"
-        '404':
-          description: "Event not found"
-
   /events/tags:
     post:
       summary: "Add multiple tags to an event"
