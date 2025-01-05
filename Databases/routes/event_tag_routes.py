@@ -20,9 +20,34 @@ def create_tags():
     if not event_id or not tags:
         return jsonify({"error": "Missing required fields."}), 400
 
+    user_id = g.current_user_id
+    
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # Check if the event exists and get its group_id
+            sql_get_group = """
+            SELECT group_id FROM Event WHERE event_id = %s
+            """
+            cursor.execute(sql_get_group, (event_id,))
+            event = cursor.fetchone()
+            if not event:
+                return jsonify({"error": "Event not found."}), 404
+
+            group_id = event['group_id']
+
+            # Check if the user is a member of the group
+            sql_check_membership = """
+            SELECT COUNT(*) AS is_member
+            FROM Membership
+            WHERE group_id = %s AND user_id = %s
+            """
+            cursor.execute(sql_check_membership, (group_id, user_id))
+            is_member = cursor.fetchone()['is_member']
+            if not is_member:
+                return jsonify({"error": "You are not a member of the group associated with this event."}), 403
+
+            # Proceed with tag creation
             for tag in tags:
                 sql_tag = """
                 INSERT INTO Tag (tag_name) VALUES (%s) ON DUPLICATE KEY UPDATE tag_id=LAST_INSERT_ID(tag_id)
@@ -121,9 +146,32 @@ def update_event_tags(event_id):
     if not tags:
         return jsonify({"error": "Tags are required."}), 400
 
+    user_id = g.current_user_id
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            sql_get_group = """
+            SELECT group_id FROM Event WHERE event_id = %s
+            """
+            cursor.execute(sql_get_group, (event_id,))
+            event = cursor.fetchone()
+            if not event:
+                return jsonify({"error": "Event not found."}), 404
+
+            group_id = event['group_id']
+
+            # Check if the user is a member of the group
+            sql_check_membership = """
+            SELECT COUNT(*) AS is_member
+            FROM Membership
+            WHERE group_id = %s AND user_id = %s
+            """
+            cursor.execute(sql_check_membership, (group_id, user_id))
+            is_member = cursor.fetchone()['is_member']
+            if not is_member:
+                return jsonify({"error": "You are not a member of the group associated with this event."}), 403
+
             # Clear existing tags
             sql_clear = """
             DELETE FROM Event_Tag WHERE event_id = %s
@@ -155,13 +203,39 @@ def delete_event_tags(event_id):
     """
     DELETE /events/tags/<event_id> - Remove all tags for a specific event.
     """
+
+    user_id = g.current_user_id
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            sql = """
+            # Check if the event exists and get its group_id
+            sql_get_group = """
+            SELECT group_id FROM Event WHERE event_id = %s
+            """
+            cursor.execute(sql_get_group, (event_id,))
+            event = cursor.fetchone()
+            if not event:
+                return jsonify({"error": "Event not found."}), 404
+
+            group_id = event['group_id']
+
+            # Check if the user is a member of the group
+            sql_check_membership = """
+            SELECT COUNT(*) AS is_member
+            FROM Membership
+            WHERE group_id = %s AND user_id = %s
+            """
+            cursor.execute(sql_check_membership, (group_id, user_id))
+            is_member = cursor.fetchone()['is_member']
+            if not is_member:
+                return jsonify({"error": "You are not a member of the group associated with this event."}), 403
+
+            # Proceed with tag deletion
+            sql_delete_tags = """
             DELETE FROM Event_Tag WHERE event_id = %s
             """
-            cursor.execute(sql, (event_id,))
+            cursor.execute(sql_delete_tags, (event_id,))
             conn.commit()
     finally:
         conn.close()
