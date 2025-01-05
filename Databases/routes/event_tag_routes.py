@@ -149,7 +149,7 @@ def update_event_tags(event_id):
     return jsonify({"message": "Tags updated successfully."}), 200
 
 
-@event_tag_bp.route('/tags/<int:event_id>', methods=['DELETE'])
+@event_tag_bp.route('/<int:event_id>/tags', methods=['DELETE'])
 @jwt_required
 def delete_event_tags(event_id):
     """

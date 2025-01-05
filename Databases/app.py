@@ -57,7 +57,7 @@ def send_swagger_yaml():
 # -----------------------------------------------------------------------------
 app.register_blueprint(user_bp, url_prefix='/users')
 app.register_blueprint(message_bp, url_prefix='/messages')
-app.register_blueprint(event_tag_bp, url_prefix='/event_tags')
+app.register_blueprint(event_tag_bp, url_prefix='/events')
 app.register_blueprint(event_bp, url_prefix='/events')
 app.register_blueprint(group_bp, url_prefix='/groups')
 app.register_blueprint(membership_bp, url_prefix='/membership')

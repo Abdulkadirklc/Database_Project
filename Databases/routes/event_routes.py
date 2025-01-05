@@ -77,13 +77,18 @@ def update_event(event_id):
             if not event:
                 return jsonify({"error": "Event not found."}), 404
 
-            sql_check_membership = """
-            SELECT COUNT(*) FROM Membership WHERE group_id = %s AND user_id = %s
+            group_id = event['group_id']
+
+            # Check if the user is the admin of the group
+            sql_check_admin = """
+            SELECT COUNT(*) AS is_admin
+            FROM Membership
+            WHERE group_id = %s AND user_id = %s AND user_role = 'Admin'
             """
-            cursor.execute(sql_check_membership, (event['group_id'], user_id))
-            is_member = cursor.fetchone()['COUNT(*)']
-            if not is_member:
-                return jsonify({"error": "You are not a member of the group hosting this event."}), 403
+            cursor.execute(sql_check_admin, (group_id, user_id))
+            is_admin = cursor.fetchone()['is_admin']
+            if not is_admin:
+                return jsonify({"error": "Only the group admin can update this event."}), 403
 
             # Proceed with event update
             sql_update = """
@@ -110,13 +115,38 @@ def delete_event(event_id):
     """
     DELETE /events/<event_id> - Delete an event by its ID.
     """
+    user_id = g.current_user_id
+
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            sql = """
+            # Fetch the group_id of the event
+            sql_get_group = """
+            SELECT group_id FROM Event WHERE event_id = %s
+            """
+            cursor.execute(sql_get_group, (event_id,))
+            event = cursor.fetchone()
+            if not event:
+                return jsonify({"error": "Event not found."}), 404
+
+            group_id = event['group_id']
+
+            # Check if the user is the admin of the group
+            sql_check_admin = """
+            SELECT COUNT(*) AS is_admin
+            FROM Membership
+            WHERE group_id = %s AND user_id = %s AND user_role = 'Admin'
+            """
+            cursor.execute(sql_check_admin, (group_id, user_id))
+            is_admin = cursor.fetchone()['is_admin']
+            if not is_admin:
+                return jsonify({"error": "Only the group admin can delete this event."}), 403
+
+            # Proceed with event deletion
+            sql_delete_event = """
             DELETE FROM Event WHERE event_id = %s
             """
-            cursor.execute(sql, (event_id,))
+            cursor.execute(sql_delete_event, (event_id,))
             conn.commit()
     finally:
         conn.close()
