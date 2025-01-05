@@ -52,9 +52,11 @@ To start the application, follow these steps:
 ### **4. Insert Dummy Data via API**
 To insert dummy data via API:
 
-1. Open a terminal and navigate to the create_database folder.
+1. Make sure that app.py is running.
+  
+2. Open a terminal and navigate to the create_database folder.
 
-2. Execute the script using the following command:
+3. Execute the script using the following command:
    ```bash
    python insert_dummy_data.py
    ```
