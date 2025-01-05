@@ -1,0 +1,10 @@
+user_id,event_id,event_status
+1,1,Attended
+2,1,Attended
+3,2,Attended
+4,3,Attended
+5,2,Attended
+6,3,Attended
+7,1,Attended
+9,4,Attended
+3,4,Not Attended

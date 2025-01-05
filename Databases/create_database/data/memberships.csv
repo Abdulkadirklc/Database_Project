@@ -1,0 +1,15 @@
+user_id,group_id,user_role
+1,1,Admin
+3,2,Admin
+7,3,Admin
+9,4,Admin
+11,5,Admin
+2,1,Member
+4,3,Admin
+6,3,Member
+7,1,Admin
+1,4,Member
+2,4,Member
+3,4,Member
+2,5,Member
+6,5,Member
