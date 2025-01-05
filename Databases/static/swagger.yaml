@@ -1259,10 +1259,11 @@ paths:
         '404':
           description: "Tag not found"
 
-  /events/{event_id}/attendance:
+  
+/events/{event_id}/attendance:
     post:
       summary: "Add attendance to an event"
-      description: "Marks the current user as attending or interested in an event. Requires JWT."
+      description: "Marks the current user as attended or not attended for an event. Requires JWT."
       tags:
         - Attendance
       security:
@@ -1283,7 +1284,7 @@ paths:
               properties:
                 status:
                   type: string
-                  example: "going"
+                  example: "attended"
       responses:
         '201':
           description: "Attendance added successfully"
@@ -1292,7 +1293,7 @@ paths:
 
     get:
       summary: "List attendance for an event"
-      description: "Retrieves a list of users who are attending or interested in a specific event."
+      description: "Retrieves a list of users who are attended or not attended for a specific event."
       tags:
         - Attendance
       parameters:
@@ -1320,7 +1321,7 @@ paths:
                       example: "alice"
                     status:
                       type: string
-                      example: "going"
+                      example: "attended"
 
     put:
       summary: "Update attendance for an event"
@@ -1345,7 +1346,7 @@ paths:
               properties:
                 status:
                   type: string
-                  example: "not_going"
+                  example: "not_attended"
       responses:
         '200':
           description: "Attendance updated successfully"
@@ -1376,8 +1377,8 @@ paths:
 
   /users/{user_id}/attendance:
     get:
-      summary: "List user’s attended or interested events"
-      description: "Retrieves a list of all events that a specific user is attending or interested in."
+      summary: "List user’s attended or not attended events"
+      description: "Retrieves a list of all events that a specific user is attended or not attended."
       tags:
         - Attendance
       parameters:
@@ -1389,7 +1390,7 @@ paths:
           description: "User ID"
       responses:
         '200':
-          description: "List of events the user is attending/interested in"
+          description: "List of events the user is attended/not attended"
           content:
             application/json:
               schema:
@@ -1405,7 +1406,7 @@ paths:
                       example: "Sample Event"
                     status:
                       type: string
-                      example: "going"
+                      example: "attended"
                     event_date:
                       type: string
                       format: date
@@ -1414,7 +1415,7 @@ paths:
   /events/attendance/top-users:
     get:
       summary: "List top users with the most event attendance"
-      description: "Retrieves users who have attended (or shown interest in) the most events."
+      description: "Retrieves users who have attended the most events."
       tags:
         - Attendance
       responses:
@@ -1622,7 +1623,7 @@ paths:
 
     delete:
       summary: "Delete feedback"
-      description: "Deletes a feedback. Only the feedback owner or the event creator can do this. Requires JWT."
+      description: "Deletes a feedback. Only the owner of the feedback can do this. Requires JWT."
       tags:
         - Feedback
       security:
@@ -1638,8 +1639,7 @@ paths:
         '200':
           description: "Feedback deleted successfully"
         '403':
-          description: "You are not allowed to delete this feedback"
+          description: "You can only delete your own feedback"
         '404':
           description: "Feedback not found"
-
 

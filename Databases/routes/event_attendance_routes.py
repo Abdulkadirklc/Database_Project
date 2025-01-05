@@ -1,11 +1,9 @@
-# table/column isimlerinde hata var
-# event_Status NULL olarak ekleniyor
-# top-user table hatası
-# delete ve list user attendance'de sıkıntı yok
+
 from flask import Blueprint, request, jsonify, g
 from routes import get_connection
 from routes.auth import jwt_required
 
+# Define the blueprint
 event_attendance_bp = Blueprint('event_attendance_bp', __name__)
 
 @event_attendance_bp.route('/events/<int:event_id>/attendance', methods=['POST'])
@@ -13,8 +11,8 @@ event_attendance_bp = Blueprint('event_attendance_bp', __name__)
 def add_attendance(event_id):
     """
     POST /events/<event_id>/attendance
-    Adds the current user as "going" or "interested" to an event.
-    Example JSON body: { "status": "going" } or { "status": "interested" }
+    Adds the current user as "attended" or "not_attended" to an event.
+    Example JSON body: { "status": "attended" } or { "status": "not_attended" }
     """
     user_id = g.current_user_id
     data = request.get_json() or {}
@@ -52,7 +50,7 @@ def add_attendance(event_id):
 def list_attendance_for_event(event_id):
     """
     GET /events/<event_id>/attendance
-    Lists which users are attending or interested in a specific event.
+    Lists which users are attending or not attending a specific event.
     """
     conn = get_connection()
     try:
@@ -60,7 +58,7 @@ def list_attendance_for_event(event_id):
             sql = """
             SELECT ea.user_id, u.username, ea.event_status
             FROM Event_Attendance ea
-            INNER JOIN Users u ON ea.user_id = u.user_id
+            INNER JOIN User u ON ea.user_id = u.user_id
             WHERE ea.event_id = %s
             """
             cursor.execute(sql, (event_id,))
@@ -75,7 +73,7 @@ def list_attendance_for_event(event_id):
 def list_user_attendance(user_id):
     """
     GET /users/<user_id>/attendance
-    Retrieves all events that a particular user is attending or interested in.
+    Retrieves all events that a particular user is attending or not attending.
     """
     conn = get_connection()
     try:
@@ -83,7 +81,7 @@ def list_user_attendance(user_id):
             sql = """
             SELECT ea.event_id, e.event_name, ea.event_status, e.event_date
             FROM Event_Attendance ea
-            INNER JOIN Event e ON ea.event_id = e.event_id
+            INNER JOIN event e ON ea.event_id = e.event_id
             WHERE ea.user_id = %s
             """
             cursor.execute(sql, (user_id,))
@@ -100,7 +98,7 @@ def update_attendance(event_id):
     """
     PUT /events/<event_id>/attendance
     Updates the attendance status of the current user for a specific event.
-    Example JSON body: { "event_status": "not_going" }
+    Example JSON body: { "status": "not_attended" }
     """
     user_id = g.current_user_id
     data = request.get_json() or {}
@@ -156,7 +154,7 @@ def delete_attendance(event_id):
 def get_top_users():
     """
     GET /events/attendance/top-users
-    Retrieves a list of users who have attended (or shown interest in) the most events.
+    Retrieves a list of users who have attended the most events.
     """
     conn = get_connection()
     try:
@@ -164,7 +162,7 @@ def get_top_users():
             sql = """
             SELECT ea.user_id, u.username, COUNT(*) AS total_attendance
             FROM Event_Attendance ea
-            INNER JOIN Users u ON ea.user_id = u.user_id
+            INNER JOIN User u ON ea.user_id = u.user_id
             GROUP BY ea.user_id
             ORDER BY total_attendance DESC
             LIMIT 10

@@ -1,5 +1,3 @@
-# Table/column name hataları
-# Delete feedback, ya sadece user kendi feedbackini silebilsin ya da group admine çevir even owner'ı
 
 from flask import Blueprint, request, jsonify, g
 from routes import get_connection
@@ -28,7 +26,7 @@ def add_feedback():
     try:
         with conn.cursor() as cursor:
             sql_insert = """
-            INSERT INTO Feedback (event_id, user_id, rating, feedback)
+            INSERT INTO feedback (event_id, user_id, rating, feedback)
             VALUES (%s, %s, %s, %s)
             """
             cursor.execute(sql_insert, (event_id, user_id, rating, feedback))
@@ -51,7 +49,7 @@ def get_feedback_by_event(event_id):
         with conn.cursor() as cursor:
             sql = """
             SELECT f.feedback_id, f.user_id, u.username, f.rating, f.feedback
-            FROM Feedback f
+            FROM feedback f
             INNER JOIN User u ON f.user_id = u.user_id
             WHERE f.event_id = %s
             """
@@ -74,7 +72,7 @@ def get_feedback_by_user(user_id):
         with conn.cursor() as cursor:
             sql = """
             SELECT f.feedback_id, f.event_id, e.event_name, f.rating, f.feedback
-            FROM Feedback f
+            FROM feedback f
             INNER JOIN Event e ON f.event_id = e.event_id
             WHERE f.user_id = %s
             """
@@ -97,7 +95,7 @@ def get_event_rating_summary(event_id):
         with conn.cursor() as cursor:
             sql = """
             SELECT AVG(rating) AS average_rating, COUNT(*) AS total_feedback
-            FROM Feedback
+            FROM feedback
             WHERE event_id = %s
             """
             cursor.execute(sql, (event_id,))
@@ -133,9 +131,8 @@ def update_feedback(feedback_id):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Check if the current user is the owner of this feedback
             sql_check_owner = """
-            SELECT user_id FROM Feedback WHERE feedback_id = %s
+            SELECT user_id FROM feedback WHERE feedback_id = %s
             """
             cursor.execute(sql_check_owner, (feedback_id,))
             feedback = cursor.fetchone()
@@ -146,7 +143,7 @@ def update_feedback(feedback_id):
                 return jsonify({"error": "You can only update your own feedback."}), 403
 
             sql_update = """
-            UPDATE Feedback
+            UPDATE feedback
             SET rating = %s, feedback = %s
             WHERE feedback_id = %s
             """
@@ -163,17 +160,16 @@ def update_feedback(feedback_id):
 def delete_feedback(feedback_id):
     """
     DELETE /feedback/<feedback_id>
-    Deletes a feedback. Only the feedback owner or the event creator can do this.
+    Deletes a feedback. Only the feedback owner can do this.
     """
-    user_id = g.current_user_id
+    user_id = g.current_user_id 
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             sql_feedback = """
-            SELECT f.user_id, e.group_id, e.event_id
-            FROM Feedback f
-            INNER JOIN Event e ON f.event_id = e.event_id
-            WHERE f.feedback_id = %s
+            SELECT user_id 
+            FROM Feedback 
+            WHERE feedback_id = %s
             """
             cursor.execute(sql_feedback, (feedback_id,))
             feedback = cursor.fetchone()
@@ -181,21 +177,13 @@ def delete_feedback(feedback_id):
                 return jsonify({"error": "Feedback not found."}), 404
 
             feedback_owner_id = feedback['user_id']
-            event_id = feedback['event_id']
-
-            sql_event_owner = """
-            SELECT created_by FROM Event WHERE event_id = %s
-            """
-            cursor.execute(sql_event_owner, (event_id,))
-            event_data = cursor.fetchone()
-            if not event_data:
-                return jsonify({"error": "Event not found."}), 404
-
-            if feedback_owner_id != user_id and event_data['created_by'] != user_id:
+            
+            if feedback_owner_id != user_id:
                 return jsonify({"error": "You are not allowed to delete this feedback."}), 403
 
             sql_delete = """
-            DELETE FROM Feedback WHERE feedback_id = %s
+            DELETE FROM Feedback 
+            WHERE feedback_id = %s
             """
             cursor.execute(sql_delete, (feedback_id,))
             conn.commit()
