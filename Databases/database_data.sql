@@ -12,8 +12,6 @@ INSERT INTO `User` (username, email, password, bio) VALUES
 ('Mete', 'egmt@gmail.com', '12345', 'İlkel teknolojiler meraklısı'),
 ('Utku', 'utku@gmail.com', 'sst3424146', 'CEO @qFin');
 
-use event_management;
-
 
 INSERT INTO `Group` (group_name, group_description, created_by) VALUES
 ('Trekking', 'Her hafta sonu doğa yürüyüşleri düzenleriz.', 1),
