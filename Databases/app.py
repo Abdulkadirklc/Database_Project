@@ -1,16 +1,6 @@
-# TODO
-# grup kurunca membership tablosuna ekle yeni ilişkileri
-# membership - kendini gruba admin olarak ekleyebiliyorsun
-# internal server error'u düzgün printle
-#
-
-
-
-
-
-
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, jsonify
 from flask_swagger_ui import get_swaggerui_blueprint
+from pymysql.err import IntegrityError
 import webbrowser
 import os
 
@@ -27,6 +17,26 @@ from routes.feedback_routes import feedback_bp
 
 app = Flask(__name__)
 
+# Handle internal server errors
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """
+    Global error handler for uncaught exceptions.
+    Returns a JSON response with details of the error.
+    """
+    if isinstance(e, IntegrityError):
+        # Handle specific database integrity errors (like duplicate entry)
+        error_message = str(e.args[1])  
+        return jsonify({
+            "error": "Database Integrity Error",
+            "message": error_message
+        }), 400
+
+    # Default internal server error handler
+    return jsonify({
+        "error": "Internal Server Error",
+        "message": str(e) 
+    }), 500
 # -----------------------------------------------------------------------------
 # Open Browser Automatically
 # -----------------------------------------------------------------------------
