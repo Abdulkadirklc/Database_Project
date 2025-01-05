@@ -1,3 +1,5 @@
+# Table/column name hataları
+# Delete feedback, ya sadece user kendi feedbackini silebilsin ya da group admine çevir even owner'ı
 
 from flask import Blueprint, request, jsonify, g
 from routes import get_connection
@@ -48,11 +50,10 @@ def get_feedback_by_event(event_id):
     try:
         with conn.cursor() as cursor:
             sql = """
-            SELECT f.feedback_id, f.user_id, u.username, f.rating, f.feedback, f.created_at
+            SELECT f.feedback_id, f.user_id, u.username, f.rating, f.feedback
             FROM Feedback f
-            INNER JOIN Users u ON f.user_id = u.user_id
+            INNER JOIN User u ON f.user_id = u.user_id
             WHERE f.event_id = %s
-            ORDER BY f.created_at DESC
             """
             cursor.execute(sql, (event_id,))
             feedbacks = cursor.fetchall()
@@ -72,11 +73,10 @@ def get_feedback_by_user(user_id):
     try:
         with conn.cursor() as cursor:
             sql = """
-            SELECT f.feedback_id, f.event_id, e.event_name, f.rating, f.feedback, f.created_at
+            SELECT f.feedback_id, f.event_id, e.event_name, f.rating, f.feedback
             FROM Feedback f
             INNER JOIN Event e ON f.event_id = e.event_id
             WHERE f.user_id = %s
-            ORDER BY f.created_at DESC
             """
             cursor.execute(sql, (user_id,))
             feedbacks = cursor.fetchall()

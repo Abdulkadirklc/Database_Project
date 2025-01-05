@@ -1,3 +1,14 @@
+# TODO
+# grup kurunca membership tablosuna ekle yeni ilişkileri
+# membership - kendini gruba admin olarak ekleyebiliyorsun
+# internal server error'u düzgün printle
+#
+
+
+
+
+
+
 from flask import Flask, send_from_directory
 from flask_swagger_ui import get_swaggerui_blueprint
 import webbrowser

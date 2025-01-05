@@ -1,4 +1,7 @@
-
+# table/column isimlerinde hata var
+# event_Status NULL olarak ekleniyor
+# top-user table hatası
+# delete ve list user attendance'de sıkıntı yok
 from flask import Blueprint, request, jsonify, g
 from routes import get_connection
 from routes.auth import jwt_required
@@ -34,7 +37,7 @@ def add_attendance(event_id):
                 return jsonify({"error": "You already have attendance info for this event."}), 400
 
             sql_insert = """
-            INSERT INTO Event_Attendance (event_id, user_id, status)
+            INSERT INTO Event_Attendance (event_id, user_id, event_status)
             VALUES (%s, %s, %s)
             """
             cursor.execute(sql_insert, (event_id, user_id, status))
@@ -55,7 +58,7 @@ def list_attendance_for_event(event_id):
     try:
         with conn.cursor() as cursor:
             sql = """
-            SELECT ea.user_id, u.username, ea.status
+            SELECT ea.user_id, u.username, ea.event_status
             FROM Event_Attendance ea
             INNER JOIN Users u ON ea.user_id = u.user_id
             WHERE ea.event_id = %s
@@ -78,7 +81,7 @@ def list_user_attendance(user_id):
     try:
         with conn.cursor() as cursor:
             sql = """
-            SELECT ea.event_id, e.event_name, ea.status, e.event_date
+            SELECT ea.event_id, e.event_name, ea.event_status, e.event_date
             FROM Event_Attendance ea
             INNER JOIN Event e ON ea.event_id = e.event_id
             WHERE ea.user_id = %s
@@ -97,7 +100,7 @@ def update_attendance(event_id):
     """
     PUT /events/<event_id>/attendance
     Updates the attendance status of the current user for a specific event.
-    Example JSON body: { "status": "not_going" }
+    Example JSON body: { "event_status": "not_going" }
     """
     user_id = g.current_user_id
     data = request.get_json() or {}
@@ -111,7 +114,7 @@ def update_attendance(event_id):
         with conn.cursor() as cursor:
             sql_update = """
             UPDATE Event_Attendance
-            SET status = %s
+            SET event_status = %s
             WHERE event_id = %s AND user_id = %s
             """
             cursor.execute(sql_update, (new_status, event_id, user_id))
