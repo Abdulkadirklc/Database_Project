@@ -19,7 +19,7 @@ def generate_jwt_token(user_id):
         'iat': now
     }
     token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
-    # For PyJWT >= 2.0, jwt.encode() returns a str in some modes, bytes in others.
+    # jwt.encode() returns a str in some modes, bytes in others.
     # We'll ensure it's str for consistent usage.
     return token if isinstance(token, str) else token.decode('utf-8')
 

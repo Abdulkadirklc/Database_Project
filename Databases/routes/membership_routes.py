@@ -87,7 +87,7 @@ def list_user_groups():
     GET /membership/user/groups - List all groups a user is a member of with their roles.
     Query Parameters: username (str)
     """
-    username = request.args.get('username')  # Get username from query parameters
+    username = request.args.get('username')  
 
     if not username:
         return jsonify({"error": "Username is required"}), 400
@@ -148,7 +148,7 @@ def list_all_admins():
 
 
 @membership_bp.route('/role', methods=['PUT'])
-@jwt_required  # Requires valid JWT
+@jwt_required  
 def update_user_role():
     """
     PUT /membership/role - Update a user's role in their group.
@@ -166,7 +166,7 @@ def update_user_role():
     if new_role not in ['Member', 'Guest', 'Admin']:
         return jsonify({"error": "Invalid role. Only 'Member', 'Guest', and 'Admin' are allowed."}), 400
 
-    current_user_id = g.current_user_id  # Current user ID from JWT
+    current_user_id = g.current_user_id  
 
     conn = get_connection()
     try:
@@ -244,12 +244,8 @@ def update_user_role():
     finally:
         conn.close()
 
-
-
-
-
 @membership_bp.route('/remove', methods=['DELETE'])
-@jwt_required  # Requires valid JWT
+@jwt_required 
 def remove_user_from_group():
     """
     DELETE /membership/remove - Remove a user from a group.

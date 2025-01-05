@@ -7,7 +7,6 @@ event_bp = Blueprint('event_bp', __name__)
 default_event_description = "There is no description yet for this event."
 
 
-# Check if the request sender is in the group
 @event_bp.route('/', methods=['POST'])
 @jwt_required
 def create_event():

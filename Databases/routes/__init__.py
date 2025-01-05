@@ -3,7 +3,7 @@ import pymysql
 # Database info
 DB_HOST = 'localhost'
 DB_USER = 'root'
-DB_PASSWORD = ''  # your DB password, if any
+DB_PASSWORD = ''
 DB_NAME = 'event_management'
 
 def get_connection():

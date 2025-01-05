@@ -21,7 +21,7 @@ def get_all_groups():
     return jsonify(rows), 200
 
 @group_bp.route('/', methods=['POST'])
-@jwt_required  # Requires valid JWT
+@jwt_required 
 def create_group():
     """
     POST /groups - Create a new group.
@@ -82,7 +82,7 @@ def get_group(group_id):
     return jsonify(row), 200
 
 @group_bp.route('/<int:group_id>', methods=['PUT'])
-@jwt_required  # Requires valid JWT
+@jwt_required  
 def update_group(group_id):
     """
     PUT /groups/<group_id> - Update an existing group's information.
@@ -124,7 +124,7 @@ def update_group(group_id):
     return jsonify({"message": f"Group '{group_id}' updated successfully."}), 200
 
 @group_bp.route('/<int:group_id>', methods=['DELETE'])
-@jwt_required  # Requires valid JWT
+@jwt_required  
 def delete_group(group_id):
     """
     DELETE /groups/<group_id> - Delete a group by ID.

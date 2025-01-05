@@ -134,7 +134,7 @@ def get_user(username):
 
 
 @user_bp.route('/', methods=['PUT'])
-@jwt_required  # Requires valid JWT
+@jwt_required  
 def update_user():
     """
     PUT /users - Update the authenticated user's account.
@@ -173,7 +173,7 @@ def update_user():
 
 
 @user_bp.route('/', methods=['DELETE'])
-@jwt_required  # Requires valid JWT
+@jwt_required  
 def delete_user():
     """
     DELETE /users - Delete the authenticated user's account.
