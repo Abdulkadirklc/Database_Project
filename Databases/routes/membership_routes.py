@@ -8,20 +8,15 @@ membership_bp = Blueprint('membership_bp', __name__)
 @jwt_required
 def add_user_to_group():
     """
-    POST /membership/ - Add a user to a group.
-    Expects JSON: { "group_id": int, "role": str }
+    POST /membership/ - Add the authenticated user to a group as a Member.
+    Expects JSON: { "group_id": int }
     """
     data = request.get_json() or {}
     group_id = data.get('group_id')
-    role = data.get('role', 'Member')
 
     # Ensure group_id is provided
     if not group_id:
         return jsonify({"error": "Group ID is required"}), 400
-
-    # Ensure the role is valid
-    if role not in ['Member', 'Admin', 'Guest']:
-        return jsonify({"error": "Invalid role"}), 400
 
     user_id = g.current_user_id
 
@@ -40,17 +35,18 @@ def add_user_to_group():
             if cursor.fetchone():
                 return jsonify({"error": "User already a member of this group"}), 400
 
-            # Add user to the group
+            # Add user to the group as Member
             sql_insert = """
             INSERT INTO Membership (user_id, group_id, user_role)
-            VALUES (%s, %s, %s)
+            VALUES (%s, %s, 'Member')
             """
-            cursor.execute(sql_insert, (user_id, group_id, role))
+            cursor.execute(sql_insert, (user_id, group_id))
             conn.commit()
     finally:
         conn.close()
 
     return jsonify({"message": "User added to the group successfully."}), 201
+
 
 
 @membership_bp.route('/', methods=['GET'])

@@ -25,7 +25,7 @@ def get_all_groups():
 def create_group():
     """
     POST /groups - Create a new group.
-    Expects JSON: { "group_name", "group_description", "created_by" }
+    Expects JSON: { "group_name", "group_description" }
     """
     data = request.get_json() or {}
     required_fields = ['group_name']
@@ -34,7 +34,6 @@ def create_group():
 
     group_name = data['group_name']
     group_description = data.get('group_description', '')
-    # created_by = data.get('created_by')
 
     # Get the user ID from JWT
     created_by = g.current_user_id
@@ -42,13 +41,22 @@ def create_group():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            sql = """
+            # Create the group
+            sql_group = """
             INSERT INTO `Group` (group_name, group_description, created_by)
             VALUES (%s, %s, %s)
             """
-            cursor.execute(sql, (group_name, group_description, created_by))
+            cursor.execute(sql_group, (group_name, group_description, created_by))
             conn.commit()
             new_group_id = cursor.lastrowid
+
+            # Add the creator to the Membership table as an Admin
+            sql_membership = """
+            INSERT INTO Membership (user_id, group_id, user_role)
+            VALUES (%s, %s, 'Admin')
+            """
+            cursor.execute(sql_membership, (created_by, new_group_id))
+            conn.commit()
     finally:
         conn.close()
 

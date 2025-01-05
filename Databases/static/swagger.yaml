@@ -498,7 +498,7 @@ paths:
 
   /membership/:
     post:
-      summary: "Add a user to a group"
+      summary: "Add the authenticated user to a group as a Member"
       tags:
         - Membership
       security:
@@ -513,20 +513,14 @@ paths:
                 group_id:
                   type: integer
                   example: 1
-                role:
-                  type: string
-                  enum: [Member, Admin, Guest]
-                  default: Member
-                  example: "Member"
+                  description: "The ID of the group the user wants to join."
       responses:
         '201':
           description: "User added to the group successfully"
         '400':
-          description: "Group ID or role is invalid or user is already a member"
+          description: "Group ID is invalid or user is already a member"
         '404':
           description: "Group not found"
-        '403':
-          description: "Unauthorized access"
 
     get:
       summary: "List all members of a group with their roles"
