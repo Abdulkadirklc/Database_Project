@@ -1260,7 +1260,7 @@ paths:
           description: "Tag not found"
 
   
-/events/{event_id}/attendance:
+  /events/{event_id}/attendance:
     post:
       summary: "Add attendance to an event"
       description: "Marks the current user as attended or not attended for an event. Requires JWT."
@@ -1274,7 +1274,7 @@ paths:
           required: true
           schema:
             type: integer
-          description: "Event ID"
+          description: "The ID of the event to add attendance for."
       requestBody:
         required: true
         content:
@@ -1284,16 +1284,36 @@ paths:
               properties:
                 status:
                   type: string
+                  enum: [attended, not_attended]
                   example: "attended"
+                  description: "The attendance status for the event."
       responses:
         '201':
           description: "Attendance added successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Attendance added successfully"
         '400':
-          description: "Attendance status is required"
+          description: "Attendance status is required or duplicate attendance record exists"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Attendance status is required."
+        '404':
+          description: "Event not found"
 
     get:
       summary: "List attendance for an event"
-      description: "Retrieves a list of users who are attended or not attended for a specific event."
+      description: "Retrieves a list of users who are attending or not attending for a specific event."
       tags:
         - Attendance
       parameters:
@@ -1302,10 +1322,10 @@ paths:
           required: true
           schema:
             type: integer
-          description: "Event ID"
+          description: "The ID of the event to retrieve attendance for."
       responses:
         '200':
-          description: "List of attendance records"
+          description: "List of users and their attendance status for the event"
           content:
             application/json:
               schema:
@@ -1319,7 +1339,7 @@ paths:
                     username:
                       type: string
                       example: "alice"
-                    status:
+                    event_status:
                       type: string
                       example: "attended"
 
@@ -1336,7 +1356,7 @@ paths:
           required: true
           schema:
             type: integer
-          description: "Event ID"
+          description: "The ID of the event to update attendance for."
       requestBody:
         required: true
         content:
@@ -1346,18 +1366,36 @@ paths:
               properties:
                 status:
                   type: string
+                  enum: [attended, not_attended]
                   example: "not_attended"
+                  description: "The updated attendance status."
       responses:
         '200':
           description: "Attendance updated successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Attendance updated successfully"
         '400':
           description: "New attendance status is required"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "New attendance status is required."
         '404':
           description: "Attendance record not found"
 
     delete:
       summary: "Delete attendance for an event"
-      description: "Deletes the current user's attendance record. Requires JWT."
+      description: "Deletes the current user's attendance record for an event. Requires JWT."
       tags:
         - Attendance
       security:
@@ -1368,17 +1406,33 @@ paths:
           required: true
           schema:
             type: integer
-          description: "Event ID"
+          description: "The ID of the event to delete attendance for."
       responses:
         '200':
           description: "Attendance deleted successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Attendance deleted successfully"
         '404':
           description: "Attendance record not found or already deleted"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Attendance record not found or already deleted."
 
   /users/{user_id}/attendance:
     get:
-      summary: "List user’s attended or not attended events"
-      description: "Retrieves a list of all events that a specific user is attended or not attended."
+      summary: "List a user’s attended or not attended events"
+      description: "Retrieves a list of all events that a specific user is attending or not attending."
       tags:
         - Attendance
       parameters:
@@ -1387,10 +1441,10 @@ paths:
           required: true
           schema:
             type: integer
-          description: "User ID"
+          description: "The ID of the user to retrieve attendance for."
       responses:
         '200':
-          description: "List of events the user is attended/not attended"
+          description: "List of events the user is attending or not attending"
           content:
             application/json:
               schema:
@@ -1404,7 +1458,7 @@ paths:
                     event_name:
                       type: string
                       example: "Sample Event"
-                    status:
+                    event_status:
                       type: string
                       example: "attended"
                     event_date:
@@ -1414,13 +1468,13 @@ paths:
 
   /events/attendance/top-users:
     get:
-      summary: "List top users with the most event attendance"
+      summary: "List top users by event attendance"
       description: "Retrieves users who have attended the most events."
       tags:
         - Attendance
       responses:
         '200':
-          description: "List of top users"
+          description: "List of top users and their attendance count"
           content:
             application/json:
               schema:
@@ -1437,6 +1491,8 @@ paths:
                     total_attendance:
                       type: integer
                       example: 5
+
+
 
   /feedback:
     post:
