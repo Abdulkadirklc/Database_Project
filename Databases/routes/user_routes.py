@@ -133,18 +133,15 @@ def get_user(username):
     return jsonify(row), 200
 
 
-
-## degistir
-## updateden sonra token geçersiz oluyor mu
-@user_bp.route('/<string:username>', methods=['PUT'])
+@user_bp.route('/', methods=['PUT'])
 @jwt_required  # Requires valid JWT
-def update_user(username):
+def update_user():
     """
-    PUT /users/<username> - Update an existing user (but cannot change username).
+    PUT /users - Update the authenticated user's account.
     Only the user can update their own account information.
     """
     # Extract user_id from JWT
-    current_user_id = g.current_user_id  
+    current_user_id = g.current_user_id
 
     data = request.get_json() or {}
 
@@ -156,20 +153,6 @@ def update_user(username):
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Fetch user_id based on the provided username
-            sql_check = "SELECT user_id FROM User WHERE username=%s"
-            cursor.execute(sql_check, (username,))
-            result = cursor.fetchone()
-
-            if not result:
-                return jsonify({"error": "User not found"}), 404
-
-            user_id = result['user_id']
-
-            # Ensure the current user matches the user being updated
-            if current_user_id != user_id:
-                return jsonify({"error": "Unauthorized access. You can only update your own account."}), 403
-
             # Perform the update
             sql_update = """
             UPDATE User
@@ -177,51 +160,37 @@ def update_user(username):
             WHERE user_id=%s
             """
             cursor.execute(sql_update, (
-                data.get('email', ''), 
+                data.get('email', ''),
                 updated_password or None,  # Use None if no new password
-                data.get('bio', ''), 
-                user_id
+                data.get('bio', ''),
+                current_user_id
             ))
             conn.commit()
     finally:
         conn.close()
 
-    return jsonify({"message": f"User '{username}' updated successfully."}), 200
+    return jsonify({"message": "User updated successfully."}), 200
 
-## parametreyi degistir
-@user_bp.route('/<string:username>', methods=['DELETE'])
+
+@user_bp.route('/', methods=['DELETE'])
 @jwt_required  # Requires valid JWT
-def delete_user(username):
+def delete_user():
     """
-    DELETE /users/<username> - Remove a user by username.
+    DELETE /users - Delete the authenticated user's account.
     Only the authenticated user can delete their own account.
     """
     # Get current user ID from the JWT
-    current_user_id = g.current_user_id  
+    current_user_id = g.current_user_id
 
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Retrieve user_id from the provided username
-            sql_check = "SELECT user_id FROM User WHERE username=%s"
-            cursor.execute(sql_check, (username,))
-            result = cursor.fetchone()
-
-            if not result:
-                return jsonify({"error": "User not found"}), 404
-
-            user_id = result['user_id']
-
-            # Ensure the current user matches the user being deleted
-            if current_user_id != user_id:
-                return jsonify({"error": "Unauthorized access. You can only delete your own account."}), 403
-
             # Delete the user
             sql_delete = "DELETE FROM User WHERE user_id=%s"
-            cursor.execute(sql_delete, (user_id,))
+            cursor.execute(sql_delete, (current_user_id,))
             conn.commit()
     finally:
         conn.close()
 
-    return jsonify({"message": f"User '{username}' deleted successfully."}), 200
+    return jsonify({"message": "User deleted successfully."}), 200
 

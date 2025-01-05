@@ -91,6 +91,56 @@ paths:
         '400':
           description: "Missing required fields"
 
+    put:
+      summary: "Update the authenticated user's account"
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "updated@example.com"
+                password:
+                  type: string
+                  example: "newSecret123"
+                bio:
+                  type: string
+                  example: "Updated bio text"
+      responses:
+        '200':
+          description: "User updated successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User updated successfully."
+        '401':
+          description: "Unauthorized access"
+        '403':
+          description: "Unauthorized access. You can only update your own account."
+
+    delete:
+      summary: "Delete the authenticated user's account"
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: "User deleted successfully"
+        '401':
+          description: "Invalid or missing token"
+
   /users/login:
     post:
       summary: "User login, returns JWT"
@@ -158,66 +208,7 @@ paths:
         '404':
           description: "User not found"
 
-    put:
-      summary: "Update an existing user by username (Cannot change username)"
-      tags:
-        - Users
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: username
-          required: true
-          schema:
-            type: string
-          description: "The username of the user to update."
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  example: "updated@example.com"
-                password:
-                  type: string
-                  example: "newSecret123"
-                bio:
-                  type: string
-                  example: "Updated bio text"
-      responses:
-        '200':
-          description: "User updated successfully"
-        '401':
-          description: "Unauthorized access"
-        '403':
-          description: "Unauthorized access. You can only update your own account."
-        '404':
-          description: "User not found"
-
-    delete:
-      summary: "Delete a user by username (Requires JWT)"
-      tags:
-        - Users
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: username
-          required: true
-          schema:
-            type: string
-          description: "The username of the user to delete."
-      responses:
-        '200':
-          description: "User deleted"
-        '401':
-          description: "Invalid or missing token"
-        '404':
-          description: "User not found"
-
+  
   /events:
     post:
       summary: "Create a new event"
@@ -1141,7 +1132,7 @@ paths:
         '401':
           description: "Unauthorized access or missing token"
 
-  /messages/<message_id>:
+  /messages/{message_id}:
     delete:
       summary: "Delete a message by its ID"
       tags:
@@ -1173,7 +1164,7 @@ paths:
         '401':
           description: "Unauthorized access or missing token"
 
-    put:
+    put:  
       summary: "Update a message by its ID"
       tags:
         - Messages
@@ -1187,7 +1178,34 @@ paths:
             type: integer
           description: "The ID of the message to update."
       requestBody:
-        req
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_message:
+                  type: string
+                  example: "Updated message content"
+      responses:
+        '200':
+          description: "Message updated successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message updated successfully"
+        '400':
+          description: "Invalid request data"
+        '403':
+          description: "Unauthorized access. Only the creator can update this message."
+        '404':
+          description: "Message not found"
+        '401':
+          description: "Unauthorized access or missing token"
 
 
   /tags:
