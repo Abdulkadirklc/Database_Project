@@ -16,7 +16,7 @@ pip install -r requirements.txt
 ### **2. Create Database and Tables**
 To set up your database, follow these steps:
 
-1. Open the `create_tables.py` file and locate the database configuration section:
+1. Open the `create_database/create_tables.py` file and locate the database configuration section:
    ```python
    # Database configuration
    DB_HOST = 'your_db_host'
@@ -49,8 +49,21 @@ To start the application, follow these steps:
    ```bash
    python app.py
    ```
-   Note: The application will automatically open the Swagger documentation in your default web browser. This feature is implemented using the webbrowser library.
-### 4. Access API Documentation
+### **4. Insert Dummy Data via API**
+To insert dummy data via API:
+
+1. Make sure that app.py is running.
+  
+2. Open a terminal and navigate to the create_database folder.
+
+3. Execute the script using the following command:
+   ```bash
+   python insert_dummy_data.py
+   ```
+   
+   Note: While inserting into `Membership`, you might see some errors on the terminal, this is due to existing `Group` admins, so there is nothing wrong with those errors.
+   
+### 5. Access API Documentation
 Once the application is running, you can access the Swagger documentation to explore the API:
 
 1. If the browser does not open automatically, manually navigate to the following URL:
