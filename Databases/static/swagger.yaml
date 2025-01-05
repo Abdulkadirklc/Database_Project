@@ -647,22 +647,16 @@ paths:
                     user_role:
                       type: string
                       example: "Admin"
-
   /membership/role:
     put:
-      summary: Update a user's role in their group
+      summary: "Update a user's role in their group"
       description: |
-        - Admin can update any user's role in their group.
-        - Admin can promote a user to an admin role, but there can be at most 2 admins per group.
-        - Admin can resign from their role and become a Member, but there must be at least 1 admin remaining in the group.
-        - Non-admin users can only update their own role, and cannot promote themselves to Admin.
-      operationId: updateUserRole
+        Allows a user to update the role of a group member. Admins can update any user's role, while non-admin users can only update their own role. Ensures that there is always at least one admin in the group.
       tags:
         - Membership
       security:
         - BearerAuth: []
       requestBody:
-        description: JSON object containing the group_id, user_id, and role.
         required: true
         content:
           application/json:
@@ -671,24 +665,24 @@ paths:
               properties:
                 group_id:
                   type: integer
-                  description: The ID of the group
+                  description: "ID of the group."
+                  example: 1
                 user_id:
                   type: integer
-                  description: The ID of the user whose role is being updated
+                  description: "ID of the user whose role will be updated."
+                  example: 42
                 role:
                   type: string
-                  enum:
-                    - Admin
-                    - Member
-                    - Guest
-                  description: The new role for the user
+                  description: "New role for the user."
+                  enum: [Member, Guest, Admin]
+                  example: "Member"
               required:
                 - group_id
                 - user_id
                 - role
       responses:
-        200:
-          description: User role updated successfully.
+        '200':
+          description: "User role updated successfully."
           content:
             application/json:
               schema:
@@ -697,8 +691,8 @@ paths:
                   message:
                     type: string
                     example: "User role updated successfully."
-        400:
-          description: Bad request. Invalid role, missing parameters, or condition violations.
+        '400':
+          description: "Invalid input, such as missing or invalid parameters."
           content:
             application/json:
               schema:
@@ -706,9 +700,9 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "Cannot add more than 2 admins to the group."
-        403:
-          description: Forbidden. User is not authorized to perform this action.
+                    example: "Invalid role. Only 'Member', 'Guest', and 'Admin' are allowed."
+        '403':
+          description: "Unauthorized action or insufficient permissions."
           content:
             application/json:
               schema:
@@ -716,9 +710,9 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "You cannot assign yourself the Admin role."
-        404:
-          description: Not found. Target user not found in the group.
+                    example: "You are not a member of this group."
+        '404':
+          description: "Target user is not a member of the group."
           content:
             application/json:
               schema:
@@ -726,33 +720,18 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "Target user is not a member of this group."
-        409:
-          description: Conflict. Admin count in the group is insufficient or excessive.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Cannot remove the last admin of the group."
+                    example: "Target user is not a member of the group."
 
   /membership/remove:
     delete:
-      summary: Remove a user from a group.
+      summary: "Remove a user from a group"
       description: |
-        Only an admin or the user themselves can remove a user.
-        Admin can only remove members from their own group.
-        Ensures there is always at least one admin in the group.
-      operationId: removeUserFromGroup
+        Allows an admin or the user themselves to remove a user from a group. Ensures there is always at least one admin in the group.
       tags:
         - Membership
       security:
         - BearerAuth: []
       requestBody:
-        description: |
-          Expects JSON: { "group_id": <group_id>, "user_id": <user_id> }
         required: true
         content:
           application/json:
@@ -761,16 +740,18 @@ paths:
               properties:
                 group_id:
                   type: integer
-                  description: The ID of the group
+                  description: "ID of the group."
+                  example: 1
                 user_id:
                   type: integer
-                  description: The ID of the user to remove
+                  description: "ID of the user to be removed."
+                  example: 42
               required:
                 - group_id
                 - user_id
       responses:
         '200':
-          description: User removed from the group successfully.
+          description: "User removed from the group successfully."
           content:
             application/json:
               schema:
@@ -780,9 +761,7 @@ paths:
                     type: string
                     example: "User removed from the group successfully."
         '400':
-          description: |
-            Error in request parameters, such as missing group_id, user_id,
-            or if removing an admin that would leave the group without an admin.
+          description: "Invalid input, such as missing parameters or trying to remove the last admin."
           content:
             application/json:
               schema:
@@ -790,11 +769,9 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "There must be at least one admin in the group."
+                    example: "Cannot remove the last admin from the group."
         '403':
-          description: |
-            Unauthorized access, either the user is not an admin or not the target user.
-            Admin can only remove users from their own group.
+          description: "Unauthorized action or insufficient permissions."
           content:
             application/json:
               schema:
@@ -802,9 +779,9 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "Unauthorized. Only admins or the user themselves can remove members."
+                    example: "You are not a member of this group."
         '404':
-          description: User not found or not a member of the group.
+          description: "User not a member of the group."
           content:
             application/json:
               schema:
@@ -813,16 +790,8 @@ paths:
                   error:
                     type: string
                     example: "User not a member of the group."
-        '500':
-          description: Internal server error due to a failure in the backend logic.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "An error occurred: [error_message]"
+
+
 
   /groups:
     get:

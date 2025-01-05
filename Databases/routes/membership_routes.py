@@ -168,7 +168,7 @@ def update_user_role():
 
     # Ensure the role is valid
     if new_role not in ['Member', 'Guest', 'Admin']:
-        return jsonify({"error": "Invalid role. Only 'Member', 'Guest' and 'Admin' are allowed."}), 400
+        return jsonify({"error": "Invalid role. Only 'Member', 'Guest', and 'Admin' are allowed."}), 400
 
     current_user_id = g.current_user_id  # Current user ID from JWT
 
@@ -189,13 +189,11 @@ def update_user_role():
 
             current_user_role = current_user_membership['user_role']
 
-            # Admin can update any user's role in their group
+            # If the current user is an admin
             if current_user_role == 'Admin':
-                if user_id_to_update == current_user_id:
-                    # Admin can resign from being Admin (become Member)
-                    if new_role == 'Admin':
-                        return jsonify({"error": "You are already an Admin."}), 403
-                    # Admin can choose to become a Member
+                # Admin-specific rules
+                if user_id_to_update == current_user_id and new_role != 'Admin':
+                    # Check the number of admins before allowing the update
                     sql_check_admin_count = """
                     SELECT COUNT(*) as admin_count
                     FROM Membership
@@ -203,22 +201,23 @@ def update_user_role():
                     """
                     cursor.execute(sql_check_admin_count, (group_id,))
                     admin_count = cursor.fetchone()['admin_count']
-                    if admin_count <= 1 and new_role == 'Member':
-                        return jsonify({"error": "Cannot remove the last admin of the group."}), 400
 
-                # If changing to Admin, ensure there are at most 2 admins
-                if new_role == 'Admin':
-                    sql_check_admin_count = """
-                    SELECT COUNT(*) as admin_count
-                    FROM Membership
-                    WHERE group_id = %s AND user_role = 'Admin'
-                    """
-                    cursor.execute(sql_check_admin_count, (group_id,))
-                    admin_count = cursor.fetchone()['admin_count']
-                    if admin_count >= 2:
-                        return jsonify({"error": "Cannot add more than 2 admins to the group"}), 400
+                    if admin_count <= 1:
+                        return jsonify({"error": "Cannot update the last admin of the group."}), 400
 
-                # Perform the role update (whether it is an admin promotion or resignation)
+                # Check if the target user is a member of the group
+                sql_check_target_user_membership = """
+                SELECT user_role
+                FROM Membership
+                WHERE user_id = %s AND group_id = %s
+                """
+                cursor.execute(sql_check_target_user_membership, (user_id_to_update, group_id))
+                target_user_membership = cursor.fetchone()
+
+                if not target_user_membership:
+                    return jsonify({"error": "Target user is not a member of the group"}), 404
+
+                # Update role for any user
                 sql_update_role = """
                 UPDATE Membership
                 SET user_role = %s
@@ -228,9 +227,9 @@ def update_user_role():
                 conn.commit()
                 return jsonify({"message": "User role updated successfully."}), 200
 
-            # Non-admin user can update only their own role
+            # If the current user is not an admin
             elif current_user_id == user_id_to_update:
-                # Prevent non-admin users from making themselves admin
+                # Non-admin user can only update their own role, but cannot become admin
                 if new_role == 'Admin':
                     return jsonify({"error": "You cannot assign yourself the Admin role"}), 403
 
@@ -245,8 +244,11 @@ def update_user_role():
 
             else:
                 return jsonify({"error": "Unauthorized action"}), 403
+
     finally:
         conn.close()
+
+
 
 
 
@@ -257,52 +259,79 @@ def remove_user_from_group():
     DELETE /membership/remove - Remove a user from a group.
     Only admin or the user themselves can remove a user.
     Ensures there is always at least one admin in the group.
-    Expects JSON: { "group_id": <group_id>, "user_id": <user_id> }
+    Expects JSON: { "group_id": int, "user_id": int }
     """
     data = request.get_json() or {}
     group_id = data.get('group_id')
     user_id = data.get('user_id')
 
     if not group_id or not user_id:
-        return jsonify({"error": "group_id and user_id are required"}), 400
+        return jsonify({"error": "Group ID and User ID are required"}), 400
 
     current_user_id = g.current_user_id
-    conn = get_connection()
 
+    conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Check if the user is a member of the group
-            cursor.execute("SELECT user_role FROM Membership WHERE group_id = %s AND user_id = %s", (group_id, user_id))
-            membership = cursor.fetchone()
+            # Check if the current user is a member of the group
+            cursor.execute(
+                "SELECT user_role FROM Membership WHERE group_id = %s AND user_id = %s",
+                (group_id, current_user_id)
+            )
+            current_user_membership = cursor.fetchone()
 
-            if not membership:
+            if not current_user_membership:
+                return jsonify({"error": "You are not a member of this group"}), 403
+
+            current_user_role = current_user_membership['user_role']
+
+            # Check if the target user exists in the group
+            cursor.execute(
+                "SELECT user_role FROM Membership WHERE group_id = %s AND user_id = %s",
+                (group_id, user_id)
+            )
+            target_user_membership = cursor.fetchone()
+
+            if not target_user_membership:
                 return jsonify({"error": "User not a member of the group"}), 404
 
-            user_role = membership[0]
-            is_admin = user_role == 'Admin'
+            target_user_role = target_user_membership['user_role']
 
-            # Admin can remove any member, user can only remove themselves
-            if not is_admin and current_user_id != user_id:
-                return jsonify({"error": "Unauthorized. Only admins or the user themselves can remove members."}), 403
+            # If the current user is the same as the target user
+            if current_user_id == user_id:
+                # If the current user is an admin and trying to leave, check admin count
+                if current_user_role == 'Admin':
+                    cursor.execute(
+                        "SELECT COUNT(*) as admin_count FROM Membership WHERE group_id = %s AND user_role = 'Admin'",
+                        (group_id,)
+                    )
+                    admin_count = cursor.fetchone()['admin_count']
+                    if admin_count <= 1:
+                        return jsonify({"error": "Cannot remove the last admin from the group."}), 400
 
-            # If admin, check that they're removing from their own group and there's still at least one admin left
-            if is_admin:
-                cursor.execute("SELECT COUNT(*) FROM Membership WHERE group_id = %s AND user_role = 'Admin'", (group_id,))
-                admin_count = cursor.fetchone()[0]
+                # Allow the user to remove themselves
+                cursor.execute(
+                    "DELETE FROM Membership WHERE group_id = %s AND user_id = %s",
+                    (group_id, user_id)
+                )
+                conn.commit()
+                return jsonify({"message": "You have been removed from the group successfully."}), 200
 
-                if admin_count <= 1 and current_user_id == user_id:
-                    return jsonify({"error": "There must be at least one admin in the group."}), 400
+            # If the current user is an admin and trying to remove someone else
+            if current_user_role == 'Admin':
+                # Proceed with removing the user from the group
+                cursor.execute(
+                    "DELETE FROM Membership WHERE group_id = %s AND user_id = %s",
+                    (group_id, user_id)
+                )
+                conn.commit()
+                return jsonify({"message": "User removed from the group successfully."}), 200
 
-            # Remove the user from the group
-            cursor.execute("DELETE FROM Membership WHERE group_id = %s AND user_id = %s", (group_id, user_id))
-            conn.commit()
+            # If the current user is neither the target user nor an admin
+            return jsonify({"error": "Unauthorized action"}), 403
 
-    except Exception as e:
-        conn.rollback()  # Rollback in case of error
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
     finally:
         conn.close()
 
-    return jsonify({"message": "User removed from the group successfully."}), 200
 
 
