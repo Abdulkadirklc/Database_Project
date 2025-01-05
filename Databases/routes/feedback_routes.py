@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify, g
 from routes import get_connection
 from routes.auth import jwt_required
@@ -10,13 +11,13 @@ def add_feedback():
     """
     POST /feedback
     Adds feedback from a user for a specific event.
-    Example JSON body: { "event_id": 1, "rating": 5, "comment": "Great event!" }
+    Example JSON body: { "event_id": 1, "rating": 5, "feedback": "Great event!" }
     """
     user_id = g.current_user_id
     data = request.get_json() or {}
     event_id = data.get('event_id')
     rating = data.get('rating')
-    comment = data.get('comment', "")
+    feedback = data.get('feedback', "")
 
     if not event_id or rating is None:
         return jsonify({"error": "event_id and rating are required."}), 400
@@ -25,10 +26,10 @@ def add_feedback():
     try:
         with conn.cursor() as cursor:
             sql_insert = """
-            INSERT INTO Feedback (event_id, user_id, rating, comment)
+            INSERT INTO Feedback (event_id, user_id, rating, feedback)
             VALUES (%s, %s, %s, %s)
             """
-            cursor.execute(sql_insert, (event_id, user_id, rating, comment))
+            cursor.execute(sql_insert, (event_id, user_id, rating, feedback))
             conn.commit()
             feedback_id = cursor.lastrowid
     finally:
@@ -47,7 +48,7 @@ def get_feedback_by_event(event_id):
     try:
         with conn.cursor() as cursor:
             sql = """
-            SELECT f.feedback_id, f.user_id, u.username, f.rating, f.comment, f.created_at
+            SELECT f.feedback_id, f.user_id, u.username, f.rating, f.feedback, f.created_at
             FROM Feedback f
             INNER JOIN Users u ON f.user_id = u.user_id
             WHERE f.event_id = %s
@@ -71,7 +72,7 @@ def get_feedback_by_user(user_id):
     try:
         with conn.cursor() as cursor:
             sql = """
-            SELECT f.feedback_id, f.event_id, e.event_name, f.rating, f.comment, f.created_at
+            SELECT f.feedback_id, f.event_id, e.event_name, f.rating, f.feedback, f.created_at
             FROM Feedback f
             INNER JOIN Event e ON f.event_id = e.event_id
             WHERE f.user_id = %s
@@ -119,12 +120,12 @@ def update_feedback(feedback_id):
     """
     PUT /feedback/<feedback_id>
     Updates an existing feedback. Only the owner of the feedback can do this.
-    Example JSON body: { "rating": 4, "comment": "It was good, but could be better." }
+    Example JSON body: { "rating": 4, "feedback": "It was good, but could be better." }
     """
     user_id = g.current_user_id
     data = request.get_json() or {}
     new_rating = data.get('rating')
-    new_comment = data.get('comment')
+    new_feedback = data.get('feedback')
 
     if new_rating is None:
         return jsonify({"error": "rating is required to update feedback."}), 400
@@ -146,10 +147,10 @@ def update_feedback(feedback_id):
 
             sql_update = """
             UPDATE Feedback
-            SET rating = %s, comment = %s
+            SET rating = %s, feedback = %s
             WHERE feedback_id = %s
             """
-            cursor.execute(sql_update, (new_rating, new_comment, feedback_id))
+            cursor.execute(sql_update, (new_rating, new_feedback, feedback_id))
             conn.commit()
     finally:
         conn.close()
@@ -202,3 +203,4 @@ def delete_feedback(feedback_id):
         conn.close()
 
     return jsonify({"message": "Feedback deleted successfully"}), 200
+

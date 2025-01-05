@@ -29,7 +29,7 @@ def add_user_to_group():
     try:
         with conn.cursor() as cursor:
             # Check if group exists
-            sql_check = "SELECT 1 FROM Group WHERE group_id = %s"
+            sql_check = "SELECT 1 FROM `Group` WHERE group_id = %s"
             cursor.execute(sql_check, (group_id,))
             if not cursor.fetchone():
                 return jsonify({"error": "Group not found"}), 404
@@ -52,14 +52,14 @@ def add_user_to_group():
 
     return jsonify({"message": "User added to the group successfully."}), 201
 
+
 @membership_bp.route('/', methods=['GET'])
 def list_group_members():
     """
     GET /membership/ - List all members of a group with their roles.
-    Expects JSON: { "group_id": int }
+    Query Parameters: group_id (int)
     """
-    data = request.get_json() or {}
-    group_id = data.get('group_id')
+    group_id = request.args.get('group_id', type=int)
 
     if not group_id:
         return jsonify({"error": "Group ID is required"}), 400
@@ -67,14 +67,19 @@ def list_group_members():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
+            # Fetch members and their roles
             sql = """
             SELECT u.username, m.user_role 
             FROM Membership m
-            JOIN User u ON m.user_id = u.user_id
+            JOIN `User` u ON m.user_id = u.user_id
             WHERE m.group_id = %s
             """
             cursor.execute(sql, (group_id,))
             members = cursor.fetchall()
+
+            # Check if the group has any members
+            if not members:
+                return jsonify({"error": "Group not found"}), 404  # If no members found
     finally:
         conn.close()
 
@@ -84,10 +89,9 @@ def list_group_members():
 def list_user_groups():
     """
     GET /membership/user/groups - List all groups a user is a member of with their roles.
-    Expects JSON: { "username": str }
+    Query Parameters: username (str)
     """
-    data = request.get_json() or {}
-    username = data.get('username')
+    username = request.args.get('username')  # Get username from query parameters
 
     if not username:
         return jsonify({"error": "Username is required"}), 400
@@ -96,9 +100,10 @@ def list_user_groups():
     try:
         with conn.cursor() as cursor:
             # Get user_id from username
-            sql_get_user_id = "SELECT user_id FROM User WHERE username = %s"
+            sql_get_user_id = "SELECT user_id FROM `User` WHERE username = %s"
             cursor.execute(sql_get_user_id, (username,))
             user = cursor.fetchone()
+
             if not user:
                 return jsonify({"error": "User not found"}), 404
             user_id = user['user_id']
@@ -112,10 +117,15 @@ def list_user_groups():
             """
             cursor.execute(sql, (user_id,))
             groups = cursor.fetchall()
+
+            # If no groups found, return appropriate message
+            if not groups:
+                return jsonify({"error": "User is not a member of any group"}), 404
     finally:
         conn.close()
 
     return jsonify(groups), 200
+
 
 
 @membership_bp.route('/admins', methods=['GET'])
@@ -129,7 +139,7 @@ def list_all_admins():
             sql = """
             SELECT g.group_name, u.username, m.user_role 
             FROM Membership m
-            JOIN User u ON m.user_id = u.user_id
+            JOIN `User` u ON m.user_id = u.user_id
             JOIN `Group` g ON m.group_id = g.group_id
             WHERE m.user_role = 'Admin'
             """
@@ -140,76 +150,103 @@ def list_all_admins():
 
     return jsonify(admins), 200
 
+
 @membership_bp.route('/role', methods=['PUT'])
 @jwt_required  # Requires valid JWT
 def update_user_role():
     """
     PUT /membership/role - Update a user's role in their group.
-    Expects JSON: { "user_id", "role" }
+    Expects JSON: { "group_id": int, "user_id": int, "role": str }
     """
     data = request.get_json() or {}
+    group_id = data.get('group_id')
     user_id_to_update = data.get('user_id')  # User whose role we want to update
     new_role = data.get('role')
 
-    # Ensure the role is valid
-    if new_role not in ['Member', 'Admin', 'Guest']:
-        return jsonify({"error": "Invalid role"}), 400
+    if not group_id or not user_id_to_update or not new_role:
+        return jsonify({"error": "Group ID, User ID, and Role are required"}), 400
 
-    current_user_id = g.current_user_id
+    # Ensure the role is valid
+    if new_role not in ['Member', 'Guest', 'Admin']:
+        return jsonify({"error": "Invalid role. Only 'Member', 'Guest' and 'Admin' are allowed."}), 400
+
+    current_user_id = g.current_user_id  # Current user ID from JWT
 
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Check if the current user is an admin of the group the target user belongs to
-            sql_check_admin = """
-            SELECT m.group_id
-            FROM Membership m
-            WHERE m.user_id = %s AND m.user_role = 'Admin'
+            # Check if the current user is a member of the given group
+            sql_check_membership = """
+            SELECT user_role
+            FROM Membership
+            WHERE user_id = %s AND group_id = %s
             """
-            cursor.execute(sql_check_admin, (current_user_id,))
-            admin_groups = cursor.fetchall()
+            cursor.execute(sql_check_membership, (current_user_id, group_id))
+            current_user_membership = cursor.fetchone()
 
-            # If user is not an admin in any group, deny the request
-            if not admin_groups:
-                return jsonify({"error": "Unauthorized. Only admins can change roles."}), 403
+            if not current_user_membership:
+                return jsonify({"error": "You are not a member of this group"}), 403
 
-            # Check if the user to update is a member of any group
-            sql_check_member = """
-            SELECT user_role, group_id FROM Membership WHERE user_id = %s
-            """
-            cursor.execute(sql_check_member, (user_id_to_update,))
-            current_role_data = cursor.fetchone()
+            current_user_role = current_user_membership['user_role']
 
-            if not current_role_data:
-                return jsonify({"error": "User not a member of any group"}), 404
+            # Admin can update any user's role in their group
+            if current_user_role == 'Admin':
+                if user_id_to_update == current_user_id:
+                    # Admin can resign from being Admin (become Member)
+                    if new_role == 'Admin':
+                        return jsonify({"error": "You are already an Admin."}), 403
+                    # Admin can choose to become a Member
+                    sql_check_admin_count = """
+                    SELECT COUNT(*) as admin_count
+                    FROM Membership
+                    WHERE group_id = %s AND user_role = 'Admin'
+                    """
+                    cursor.execute(sql_check_admin_count, (group_id,))
+                    admin_count = cursor.fetchone()['admin_count']
+                    if admin_count <= 1 and new_role == 'Member':
+                        return jsonify({"error": "Cannot remove the last admin of the group."}), 400
 
-            current_role = current_role_data['user_role']
-            group_id = current_role_data['group_id']
+                # If changing to Admin, ensure there are at most 2 admins
+                if new_role == 'Admin':
+                    sql_check_admin_count = """
+                    SELECT COUNT(*) as admin_count
+                    FROM Membership
+                    WHERE group_id = %s AND user_role = 'Admin'
+                    """
+                    cursor.execute(sql_check_admin_count, (group_id,))
+                    admin_count = cursor.fetchone()['admin_count']
+                    if admin_count >= 2:
+                        return jsonify({"error": "Cannot add more than 2 admins to the group"}), 400
 
-            # If changing from Admin to another role, ensure there is at least 1 admin in the group
-            if current_role == 'Admin' and new_role != 'Admin':
-                sql_check_admins = "SELECT COUNT(*) as admin_count FROM Membership WHERE group_id = %s AND user_role = 'Admin'"
-                cursor.execute(sql_check_admins, (group_id,))
-                admin_count = cursor.fetchone()['admin_count']
-                if admin_count <= 1:
-                    return jsonify({"error": "Cannot change role. There must be at least 1 admin in the group."}), 400
+                # Perform the role update (whether it is an admin promotion or resignation)
+                sql_update_role = """
+                UPDATE Membership
+                SET user_role = %s
+                WHERE user_id = %s AND group_id = %s
+                """
+                cursor.execute(sql_update_role, (new_role, user_id_to_update, group_id))
+                conn.commit()
+                return jsonify({"message": "User role updated successfully."}), 200
 
-            # If changing to Admin, ensure there are at most 2 admins
-            if new_role == 'Admin':
-                sql_check_admins = "SELECT COUNT(*) as admin_count FROM Membership WHERE group_id = %s AND user_role = 'Admin'"
-                cursor.execute(sql_check_admins, (group_id,))
-                admin_count = cursor.fetchone()['admin_count']
-                if admin_count >= 2:
-                    return jsonify({"error": "Cannot change role. There can be at most 2 admins in the group."}), 400
+            # Non-admin user can update only their own role
+            elif current_user_id == user_id_to_update:
+                # Prevent non-admin users from making themselves admin
+                if new_role == 'Admin':
+                    return jsonify({"error": "You cannot assign yourself the Admin role"}), 403
 
-            # Update the user's role
-            sql_update_role = "UPDATE Membership SET user_role = %s WHERE group_id = %s AND user_id = %s"
-            cursor.execute(sql_update_role, (new_role, group_id, user_id_to_update))
-            conn.commit()
+                sql_update_self_role = """
+                UPDATE Membership
+                SET user_role = %s
+                WHERE user_id = %s AND group_id = %s
+                """
+                cursor.execute(sql_update_self_role, (new_role, current_user_id, group_id))
+                conn.commit()
+                return jsonify({"message": "Your role has been updated successfully."}), 200
+
+            else:
+                return jsonify({"error": "Unauthorized action"}), 403
     finally:
         conn.close()
-
-    return jsonify({"message": "User role updated successfully."}), 200
 
 
 
@@ -219,7 +256,7 @@ def remove_user_from_group():
     """
     DELETE /membership/remove - Remove a user from a group.
     Only admin or the user themselves can remove a user.
-    Admin can only remove members from their own group.
+    Ensures there is always at least one admin in the group.
     Expects JSON: { "group_id": <group_id>, "user_id": <user_id> }
     """
     data = request.get_json() or {}
@@ -230,46 +267,42 @@ def remove_user_from_group():
         return jsonify({"error": "group_id and user_id are required"}), 400
 
     current_user_id = g.current_user_id
-
     conn = get_connection()
+
     try:
         with conn.cursor() as cursor:
-            # Check if the user is an admin of the group
-            sql_check_admin = """
-            SELECT 1 FROM Membership WHERE group_id = %s AND user_id = %s AND user_role = 'Admin'
-            """
-            cursor.execute(sql_check_admin, (group_id, current_user_id))
-            is_admin = cursor.fetchone()
-
-            # Check if the current user is trying to remove their own membership
-            if current_user_id == user_id:
-                is_admin = True  # Allow user to remove themselves regardless of admin status
-
             # Check if the user is a member of the group
-            sql_check_member = "SELECT 1 FROM Membership WHERE group_id = %s AND user_id = %s"
-            cursor.execute(sql_check_member, (group_id, user_id))
-            is_member = cursor.fetchone()
+            cursor.execute("SELECT user_role FROM Membership WHERE group_id = %s AND user_id = %s", (group_id, user_id))
+            membership = cursor.fetchone()
 
-            if not is_member:
+            if not membership:
                 return jsonify({"error": "User not a member of the group"}), 404
 
-            # Check if the user is not authorized to remove others (only admins can remove others)
+            user_role = membership[0]
+            is_admin = user_role == 'Admin'
+
+            # Admin can remove any member, user can only remove themselves
             if not is_admin and current_user_id != user_id:
                 return jsonify({"error": "Unauthorized. Only admins or the user themselves can remove members."}), 403
 
-            # If user is admin, ensure they are trying to remove from their own group
+            # If admin, check that they're removing from their own group and there's still at least one admin left
             if is_admin:
-                sql_check_group_owner = "SELECT 1 FROM Membership WHERE group_id = %s AND user_id = %s"
-                cursor.execute(sql_check_group_owner, (group_id, current_user_id))
-                if not cursor.fetchone():
-                    return jsonify({"error": "Admin can only remove users from their own group."}), 403
+                cursor.execute("SELECT COUNT(*) FROM Membership WHERE group_id = %s AND user_role = 'Admin'", (group_id,))
+                admin_count = cursor.fetchone()[0]
 
-            # Delete the membership
-            sql_delete = "DELETE FROM Membership WHERE group_id = %s AND user_id = %s"
-            cursor.execute(sql_delete, (group_id, user_id))
+                if admin_count <= 1 and current_user_id == user_id:
+                    return jsonify({"error": "There must be at least one admin in the group."}), 400
+
+            # Remove the user from the group
+            cursor.execute("DELETE FROM Membership WHERE group_id = %s AND user_id = %s", (group_id, user_id))
             conn.commit()
+
+    except Exception as e:
+        conn.rollback()  # Rollback in case of error
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
     finally:
         conn.close()
 
     return jsonify({"message": "User removed from the group successfully."}), 200
+
 

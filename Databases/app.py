@@ -20,7 +20,7 @@ app = Flask(__name__)
 # Open Browser Automatically
 # -----------------------------------------------------------------------------
 def open_browser():
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":  # Only open on the main thread
+    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         webbrowser.open_new('http://127.0.0.1:5000/docs')
 
 # -----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ app.register_blueprint(event_bp, url_prefix='/events')
 app.register_blueprint(group_bp, url_prefix='/groups')
 app.register_blueprint(membership_bp, url_prefix='/membership')
 app.register_blueprint(tag_bp, url_prefix='/tags')
-app.register_blueprint(event_attendance_bp, url_prefix='/event_attendance')
+app.register_blueprint(event_attendance_bp)
 app.register_blueprint(feedback_bp, url_prefix='/feedback')
 
 # -----------------------------------------------------------------------------

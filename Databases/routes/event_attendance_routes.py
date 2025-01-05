@@ -1,12 +1,9 @@
-# 404 not found
-
 
 from flask import Blueprint, request, jsonify, g
 from routes import get_connection
 from routes.auth import jwt_required
 
 event_attendance_bp = Blueprint('event_attendance_bp', __name__)
-
 
 @event_attendance_bp.route('/events/<int:event_id>/attendance', methods=['POST'])
 @jwt_required
@@ -16,7 +13,7 @@ def add_attendance(event_id):
     Adds the current user as "going" or "interested" to an event.
     Example JSON body: { "status": "going" } or { "status": "interested" }
     """
-    user_id = g.current_user_id  
+    user_id = g.current_user_id
     data = request.get_json() or {}
     status = data.get('status')
 
@@ -131,7 +128,7 @@ def update_attendance(event_id):
 @jwt_required
 def delete_attendance(event_id):
     """
-    DELETE /events/<event_id>/attendance
+    DELETE /events/<int:event_id>/attendance
     Deletes the attendance record of the current user for a specific event.
     """
     user_id = g.current_user_id
@@ -175,3 +172,4 @@ def get_top_users():
         conn.close()
 
     return jsonify(result), 200
+
